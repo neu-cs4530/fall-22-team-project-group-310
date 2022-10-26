@@ -98,7 +98,7 @@ export type TownEvents = {
    * An event that indicates that a player has cancled their request to teleport to a different player. This event
    * is emitted when a player clicks the cancle teleport button.
    */
-  teleportCancled: (request: TeleportRequest) => void;
+  teleportCanceled: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has accepted a teleport request from a different player. This event is
    * emitted when the player clicks the accept button on the toast popup.
@@ -455,7 +455,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportRequest', request => {
-      if (this._ourPlayer && request.toPlayerId === this._ourPlayer.id) {
+      if (request.toPlayerId === this.ourPlayer.id) {
         //TODO
       }
     });
@@ -464,7 +464,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportCanceled', request => {
-      if (this._ourPlayer && request.toPlayerId === this._ourPlayer.id) {
+      if (request.toPlayerId === this.ourPlayer.id) {
         //TODO
       }
     });
@@ -473,7 +473,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list and update the location of our player to the location of the other player.
      */
     this._socket.on('teleportAccepted', request => {
-      if (this._ourPlayer && request.fromPlayerId === this._ourPlayer.id) {
+      if (request.fromPlayerId === this.ourPlayer.id) {
         //TODO
       }
     });
@@ -482,7 +482,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportDenied', request => {
-      if (this._ourPlayer && request.fromPlayerId === this._ourPlayer.id) {
+      if (request.fromPlayerId === this.ourPlayer.id) {
         //TODO
       }
     });
@@ -512,6 +512,62 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitChatMessage(message: ChatMessage) {
     this._socket.emit('chatMessage', message);
+  }
+
+  /**
+   * Emit a teleport request to the townService
+   * @param toPlayerId the player being requested
+   */
+  public emitTeleportRequest(toPlayerId: string) {
+    if (this._playerInSession(toPlayerId)) {
+      this.emit('teleportRequest', {
+        fromPlayerId: this.ourPlayer.id,
+        toPlayerId: toPlayerId,
+        time: new Date(),
+      });
+    }
+    //TODO: Throw an error if the player is not in the session?
+  }
+
+  /**
+   * Emit a teleport canceled to the townService
+   * @param toPlayerId the player being requested
+   */
+  public emitTeleportCanceled(toPlayerId: string) {
+    if (this._playerInSession(toPlayerId)) {
+      this.emit('teleportCanceled', {
+        fromPlayerId: this.ourPlayer.id,
+        toPlayerId: toPlayerId,
+        time: new Date(), // we dont care about time here since we dont keep a copy of outgoind requests
+      });
+    }
+    //TODO: Throw an error if the player is not in the session?
+    //TODO: Do we care if there was not a request actually sent to this player?
+  }
+
+  /**
+   * Emit a teleport accepted to the townService
+   * @param request the request being accepted
+   */
+  public emitTeleportAccepted(request: TeleportRequest) {
+    this.emit('teleportAccepted', request);
+  }
+
+  /**
+   * Emit a teleport denied to the townService
+   * @param request the request being denied
+   */
+  public emitTeleportDenied(request: TeleportRequest) {
+    this.emit('teleportDenied', request);
+  }
+
+  /**
+   * Checks to see if a player with the given id is in the session
+   * @param playerId the playerId to check
+   * @returns boolean representing if the player is in the session
+   */
+  private _playerInSession(playerId: string): boolean {
+    return this._playersByIDs([playerId]).length === 1;
   }
 
   /**
