@@ -13,6 +13,7 @@ import {
   PlayerLocation,
   ServerToClientEvents,
   SocketData,
+  TeleportRequest,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
 import ConversationArea from './ConversationArea';
@@ -156,6 +157,35 @@ export default class Town {
         }
       }
     });
+
+    /**
+     * Set up a listener to forward all teleportRequests events to all clients in the town.
+     */
+    socket.on('teleportRequest', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportRequest', request);
+    });
+
+    /**
+     * Set up a listener to forward all teleportCanceled events to all clients in the town.
+     */
+    socket.on('teleportCanceled', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportCanceled', request);
+    });
+
+    /**
+     * Set up a listener to forward all teleportAccepted events to all clients in the town.
+     */
+    socket.on('teleportAccepted', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportAccepted', request);
+    });
+
+    /**
+     * Set up a listener to forward all teleportDenied events to all clients in the town.
+     */
+    socket.on('teleportDenied', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportDenied', request);
+    });
+
     return newPlayer;
   }
 

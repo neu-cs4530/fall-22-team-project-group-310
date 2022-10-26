@@ -78,15 +78,24 @@ export interface ServerToClientEvents {
   townClosing: () => void;
   chatMessage: (message: ChatMessage) => void;
   interactableUpdate: (interactable: Interactable) => void;
+  teleportRequest: (request: TeleportRequest) => void;
+  teleportCanceled: (request: TeleportRequest) => void;
+  teleportAccepted: (request: TeleportRequest) => void;
+  teleportDenied: (request: TeleportRequest) => void;
 }
 
 export interface ClientToServerEvents {
   chatMessage: (message: ChatMessage) => void;
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
+  teleportRequest: (request: TeleportRequest) => void;
+  teleportCanceled: (request: TeleportRequest) => void;
+  teleportAccepted: (request: TeleportRequest) => void;
+  teleportDenied: (request: TeleportRequest) => void;
 }
 
 export type TeleportRequest = {
   fromPlayerId: string;
   toPlayerId: string;
+  time: Date;
 }
