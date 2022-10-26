@@ -420,7 +420,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this.emit('playerMoved', newPlayer);
       }
     });
-
     /**
      * When an interactable's state changes, push that update into the relevant controller, which is assumed
      * to be either a Viewing Area or a Conversation Area, and which is assumed to already be represented by a
@@ -449,6 +448,42 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
           eachArea => eachArea.id === interactable.id,
         );
         updatedViewingArea?.updateFrom(interactable);
+      }
+    });
+    /**
+     * When a teleport is requested from a player, check if the request is to our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportRequest', request => {
+      if (this._ourPlayer && request.toPlayerId === this._ourPlayer.id) {
+        //TODO
+      }
+    });
+    /**
+     * When a teleport is canceled from a player, check if the request is to our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportCanceled', request => {
+      if (this._ourPlayer && request.toPlayerId === this._ourPlayer.id) {
+        //TODO
+      }
+    });
+    /**
+     * When a teleport is accepted from a player, check if the request is from our player. If it is, update our player's
+     * request list and update the location of our player to the location of the other player.
+     */
+    this._socket.on('teleportAccepted', request => {
+      if (this._ourPlayer && request.fromPlayerId === this._ourPlayer.id) {
+        //TODO
+      }
+    });
+    /**
+     * When a teleport is denied from a player, check if the request is from our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportDenied', request => {
+      if (this._ourPlayer && request.fromPlayerId === this._ourPlayer.id) {
+        //TODO
       }
     });
   }
