@@ -13,6 +13,7 @@ import {
   ChatMessage,
   CoveyTownSocket,
   PlayerLocation,
+  TeleportRequest,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
@@ -88,6 +89,27 @@ export type TownEvents = {
    * @param obj the interactable that is being interacted with
    */
   interact: <T extends Interactable>(typeName: T['name'], obj: T) => void;
+  /**
+   * An event that indicates that a player has requested to teleport to a different player.  This event is emitted
+   * when a player clicks the teleport request button.
+   */
+  teleportRequest: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has cancled their request to teleport to a different player. This event
+   * is emitted when a player clicks the cancle teleport button.
+   */
+  teleportCancled: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has accepted a teleport request from a different player. This event is
+   * emitted when the player clicks the accept button on the toast popup.
+   */
+  teleportAccepted: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has denied a teleport request from a different player. This event is
+   * emitted when the player clicks the denied button on the toast popup, or when the player does not respond
+   * within 30 seconds.
+   */
+  teleportDenied: (request: TeleportRequest) => void;
 };
 
 /**

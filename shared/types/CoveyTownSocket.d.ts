@@ -85,3 +85,8 @@ export interface ClientToServerEvents {
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
 }
+
+export type TeleportRequest = {
+  fromPlayerId: string;
+  toPlayerId: string;
+}
