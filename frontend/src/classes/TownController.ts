@@ -456,7 +456,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportRequest', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
-        //TODO
+        this.ourPlayer.incomingTeleports.push(request);
       }
     });
     /**
@@ -465,7 +465,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportCanceled', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
-        //TODO
+        this.ourPlayer.incomingTeleports.filter(teleport => teleport !== request);
       }
     });
     /**
@@ -474,7 +474,12 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportAccepted', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
-        //TODO
+        const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
+        if (otherPlayer.length !== 1) {
+          //TODO: What should we do if we dont have the other player?
+        }
+        const otherPlayerLocation = otherPlayer[0].location;
+        this.emitMovement(otherPlayerLocation);
       }
     });
     /**
@@ -483,7 +488,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportDenied', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
-        //TODO
+        //TODO: Notify the user that their teleport has been denied
       }
     });
   }
