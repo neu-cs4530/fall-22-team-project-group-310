@@ -20,7 +20,9 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   public gameObjects?: PlayerGameObjects;
 
-  public incomingTeleports: TeleportRequest[] = [];
+  private _incomingTeleports: TeleportRequest[] = [];
+
+  private _outgoingTeleport: TeleportRequest | undefined = undefined;
 
   constructor(id: string, userName: string, location: PlayerLocation) {
     super();
@@ -45,6 +47,26 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   get id(): string {
     return this._id;
+  }
+
+  set outgoingTeleport(request: TeleportRequest | undefined) {
+    this._outgoingTeleport = request;
+  }
+
+  get outgoingTeleport(): TeleportRequest | undefined {
+    return this._outgoingTeleport;
+  }
+
+  get incomingTeleports(): TeleportRequest[] {
+    return this._incomingTeleports;
+  }
+
+  public addIncomingTeleport(request: TeleportRequest): void {
+    this._incomingTeleports.push(request);
+  }
+
+  public removeIncomingTeleport(request: TeleportRequest): void {
+    this._incomingTeleports.filter(teleport => teleport !== request);
   }
 
   toPlayerModel(): PlayerModel {

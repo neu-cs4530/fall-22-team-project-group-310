@@ -456,7 +456,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportRequest', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
-        this.ourPlayer.incomingTeleports.push(request);
+        this.ourPlayer.addIncomingTeleport(request);
       }
     });
     /**
@@ -465,7 +465,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportCanceled', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
-        this.ourPlayer.incomingTeleports.filter(teleport => teleport !== request);
+        this.ourPlayer.removeIncomingTeleport(request);
       }
     });
     /**
@@ -480,6 +480,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         }
         const otherPlayerLocation = otherPlayer[0].location;
         this.emitMovement(otherPlayerLocation);
+        this.ourPlayer.outgoingTeleport = undefined;
       }
     });
     /**
@@ -489,6 +490,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('teleportDenied', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
         //TODO: Notify the user that their teleport has been denied
+        this.ourPlayer.outgoingTeleport = undefined;
       }
     });
   }
@@ -525,11 +527,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitTeleportRequest(toPlayerId: string) {
     if (this._playerInSession(toPlayerId)) {
-      this.emit('teleportRequest', {
+      const request = {
         fromPlayerId: this.ourPlayer.id,
         toPlayerId: toPlayerId,
         time: new Date(),
-      });
+      };
+      this.ourPlayer.outgoingTeleport = request;
+      this.emit('teleportRequest', request);
     }
     //TODO: Throw an error if the player is not in the session?
   }
@@ -540,14 +544,20 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitTeleportCanceled(toPlayerId: string) {
     if (this._playerInSession(toPlayerId)) {
-      this.emit('teleportCanceled', {
-        fromPlayerId: this.ourPlayer.id,
-        toPlayerId: toPlayerId,
-        time: new Date(), // we dont care about time here since we dont keep a copy of outgoind requests
-      });
+      const request = this.ourPlayer.outgoingTeleport;
+      this.ourPlayer.outgoingTeleport = undefined;
+      if (request) {
+        this.emit('teleportCanceled', request);
+      } else {
+        // This is a backup case, should never run if server is in sync
+        this.emit('teleportCanceled', {
+          fromPlayerId: this.ourPlayer.id,
+          toPlayerId: toPlayerId,
+          time: new Date(),
+        });
+      }
     }
     //TODO: Throw an error if the player is not in the session?
-    //TODO: Do we care if there was not a request actually sent to this player?
   }
 
   /**
