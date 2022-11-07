@@ -1,7 +1,8 @@
-import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
-import React from 'react';
+import { Box, Button, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
 import { usePlayers } from '../../classes/TownController';
 import useTownController from '../../hooks/useTownController';
+import { TeleportRequest } from '../../types/CoveyTownSocket';
 import PlayerName from './PlayerName';
 
 /**
@@ -12,11 +13,30 @@ import PlayerName from './PlayerName';
  */
 export default function PlayersInTownList(): JSX.Element {
   const players = usePlayers();
-  const { friendlyName, townID } = useTownController();
+  const townController = useTownController();
+  const { friendlyName, townID, ourPlayer } = townController;
   const sorted = players.concat([]);
   sorted.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
+
+  const [outgoingTeleport, setOutgoingTeleport] = useState<TeleportRequest | undefined>(
+    ourPlayer.outgoingTeleport,
+  );
+
+  useEffect(() => {
+    ourPlayer.addListener('outgoingTeleportChanged', setOutgoingTeleport);
+    return () => {
+      ourPlayer.removeListener('outgoingTeleportChanged', setOutgoingTeleport);
+    };
+  }, [ourPlayer]);
+
+  // const renderButtons = (player: PlayerController) => {
+  //   if(outgoingTeleport)
+  // }
+
+  // disabled={outgoingTeleport !== undefined}
+  // townController.emitTeleportRequest(player.id)
 
   return (
     <Box>
@@ -29,6 +49,9 @@ export default function PlayersInTownList(): JSX.Element {
         {sorted.map(player => (
           <ListItem key={player.id}>
             <PlayerName player={player} />
+            {player.id !== ourPlayer.id && (
+              <Button onClick={() => console.log('test 12')}>Teleport</Button>
+            )}
           </ListItem>
         ))}
       </OrderedList>
