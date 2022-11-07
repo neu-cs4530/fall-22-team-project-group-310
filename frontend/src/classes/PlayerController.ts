@@ -4,6 +4,7 @@ import { Player as PlayerModel, PlayerLocation, TeleportRequest } from '../types
 
 export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
+  outgoingTeleportChange: (newRequest: TeleportRequest | undefined) => void;
 };
 
 export type PlayerGameObjects = {
@@ -50,7 +51,10 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   set outgoingTeleport(request: TeleportRequest | undefined) {
-    this._outgoingTeleport = request;
+    if (this._outgoingTeleport !== request) {
+      this._outgoingTeleport = request;
+      this.emit('outgoingTeleportChange', request);
+    }
   }
 
   get outgoingTeleport(): TeleportRequest | undefined {
