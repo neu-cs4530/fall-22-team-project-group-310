@@ -2,7 +2,7 @@ import { Heading, StackDivider, VStack } from '@chakra-ui/react';
 import React from 'react';
 import ConversationAreasList from './ConversationAreasList';
 import PlayersList from './PlayersList';
-import TeleportRequestNotification from './TeleportRequestNotification';
+import TeleportRequestNotificationsList from './TeleportRequestNotificationsList';
 
 export default function SocialSidebar(): JSX.Element {
   return (
@@ -21,7 +21,7 @@ export default function SocialSidebar(): JSX.Element {
       </Heading>
       <PlayersList />
       <ConversationAreasList />
-      <TeleportRequestNotification />
+      <TeleportRequestNotificationsList />
     </VStack>
   );
 }

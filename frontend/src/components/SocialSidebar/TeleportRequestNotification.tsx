@@ -1,4 +1,5 @@
-import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
+import { Box, Button } from '@chakra-ui/react';
+import { ButtonBase } from '@material-ui/core';
 import React from 'react';
 import useTownController from '../../hooks/useTownController';
 
@@ -9,7 +10,8 @@ import useTownController from '../../hooks/useTownController';
  */
 export default function TeleportRequestNotification(): JSX.Element {
   const townController = useTownController();
-  const incomingTeleports = townController.ourPlayer.incomingTeleports;
+  // const incomingTeleports = townController.ourPlayer.incomingTeleports;
+  const incomingTeleports = [{ fromPlayerId: 0, toPlayerId: 1, time: new Date() }];
 
   const sorted = incomingTeleports.concat([]);
   // sorted.sort((tp1, tp2) => t1.time - tp2.time);
@@ -18,16 +20,10 @@ export default function TeleportRequestNotification(): JSX.Element {
 
   return (
     <Box>
-      <Tooltip label={'Incoming Teleport Requests'}>
-        <Heading as='h2' fontSize='l'>
-          Incoming Teleport Requests
-        </Heading>
-      </Tooltip>
-      <OrderedList>
-        {sorted.map(incomingTeleport => (
-          <ListItem key={incomingTeleport.fromPlayerId}>{incomingTeleport.fromPlayerId}</ListItem>
-        ))}
-      </OrderedList>
+      {/* <Tooltip label={'Incoming Teleport Requests'}></Tooltip> */}
+      AHH
+      <Button>Chakra Button</Button>
+      <ButtonBase>MUI Button</ButtonBase>
     </Box>
   );
 }
