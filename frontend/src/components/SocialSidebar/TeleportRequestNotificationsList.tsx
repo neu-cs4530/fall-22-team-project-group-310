@@ -14,7 +14,6 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
   // const incomingTeleports = townController.ourPlayer.incomingTeleports;
   const incomingTeleports: TeleportRequest[] = [
     { fromPlayerId: players[0].id, toPlayerId: players[1].id, time: new Date() },
-    { fromPlayerId: players[1].id, toPlayerId: players[1].id, time: new Date() },
   ];
 
   const sorted: TeleportRequest[] = incomingTeleports.concat([]);
