@@ -1,29 +1,38 @@
-import { Box, Button } from '@chakra-ui/react';
-import { ButtonBase } from '@material-ui/core';
+import { Box, Button, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import useTownController from '../../hooks/useTownController';
+import { TeleportRequest } from '../../types/CoveyTownSocket';
 
 /**
  * Displays this Player's incoming teleport requests with confirm and deny buttons
  *
  * Relevant emits/listeners:
  */
-export default function TeleportRequestNotification(): JSX.Element {
-  const townController = useTownController();
-  // const incomingTeleports = townController.ourPlayer.incomingTeleports;
-  const incomingTeleports = [{ fromPlayerId: 0, toPlayerId: 1, time: new Date() }];
+type TeleportRequestNotificationProps = {
+  teleportRequest: TeleportRequest;
+};
 
-  const sorted = incomingTeleports.concat([]);
-  // sorted.sort((tp1, tp2) => t1.time - tp2.time);
-
-  // todo better way to key list items
+export default function TeleportRequestNotification({
+  teleportRequest,
+}: TeleportRequestNotificationProps): JSX.Element {
+  const { players, emitTeleportAccepted, emitTeleportDenied } = useTownController();
+  const fromPlayer = players.find(player => teleportRequest.fromPlayerId === player.id);
+  console.log(fromPlayer);
 
   return (
     <Box>
-      {/* <Tooltip label={'Incoming Teleport Requests'}></Tooltip> */}
-      AHH
-      <Button>Chakra Button</Button>
-      <ButtonBase>MUI Button</ButtonBase>
+      <Tooltip label={'Incoming Teleport Requests'}>
+        <h3>{fromPlayer?.userName} wants to teleport to you</h3>
+      </Tooltip>
+      <Button
+        marginRight='10px'
+        colorScheme='green'
+        onClick={() => emitTeleportAccepted(teleportRequest)}>
+        Accept
+      </Button>
+      <Button colorScheme='red' onClick={() => emitTeleportDenied(teleportRequest)}>
+        Deny
+      </Button>
     </Box>
   );
 }

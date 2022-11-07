@@ -1,6 +1,7 @@
 import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import useTownController from '../../hooks/useTownController';
+import { TeleportRequest } from '../../types/CoveyTownSocket';
 import TeleportRequestNotification from './TeleportRequestNotification';
 
 /**
@@ -9,11 +10,14 @@ import TeleportRequestNotification from './TeleportRequestNotification';
  * Relevant emits/listeners:
  */
 export default function TeleportRequestNotificationsList(): JSX.Element {
-  const { ourPlayer } = useTownController();
+  const { ourPlayer, players } = useTownController();
   // const incomingTeleports = townController.ourPlayer.incomingTeleports;
-  const incomingTeleports = [{ fromPlayerId: 0, toPlayerId: 1, time: new Date() }];
+  const incomingTeleports: TeleportRequest[] = [
+    { fromPlayerId: players[0].id, toPlayerId: players[1].id, time: new Date() },
+    { fromPlayerId: players[1].id, toPlayerId: players[1].id, time: new Date() },
+  ];
 
-  const sorted = incomingTeleports.concat([]);
+  const sorted: TeleportRequest[] = incomingTeleports.concat([]);
   // sorted.sort((tp1, tp2) => t1.time - tp2.time);
 
   // todo better way to key list items
@@ -27,9 +31,9 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
       </Tooltip>
       {sorted ? (
         <OrderedList>
-          {sorted.map(incomingTeleport => (
+          {sorted.map((incomingTeleport: TeleportRequest) => (
             <ListItem key={incomingTeleport.fromPlayerId}>
-              <TeleportRequestNotification />
+              <TeleportRequestNotification teleportRequest={incomingTeleport} />
             </ListItem>
           ))}
         </OrderedList>

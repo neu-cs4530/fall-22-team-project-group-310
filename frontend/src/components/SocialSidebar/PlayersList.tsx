@@ -1,4 +1,4 @@
-import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
+import { Box, Button, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import { usePlayers } from '../../classes/TownController';
 import useTownController from '../../hooks/useTownController';
@@ -29,6 +29,7 @@ export default function PlayersInTownList(): JSX.Element {
         {sorted.map(player => (
           <ListItem key={player.id}>
             <PlayerName player={player} />
+            <Button onClick={() => console.log('CLICKED TEST BUTTON')}>Test</Button>
           </ListItem>
         ))}
       </OrderedList>
