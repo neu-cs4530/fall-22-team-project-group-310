@@ -1,9 +1,12 @@
 import EventEmitter from 'events';
+import _ from 'lodash';
 import TypedEmitter from 'typed-emitter';
-import { Player as PlayerModel, PlayerLocation } from '../types/CoveyTownSocket';
+import { Player as PlayerModel, PlayerLocation, TeleportRequest } from '../types/CoveyTownSocket';
 
 export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
+  outgoingTeleportChange: (newRequest: TeleportRequest | undefined) => void;
+  incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
 };
 
 export type PlayerGameObjects = {
@@ -19,6 +22,10 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   private readonly _userName: string;
 
   public gameObjects?: PlayerGameObjects;
+
+  private _incomingTeleports: TeleportRequest[] = [];
+
+  private _outgoingTeleport: TeleportRequest | undefined = undefined;
 
   constructor(id: string, userName: string, location: PlayerLocation) {
     super();
@@ -43,6 +50,36 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   get id(): string {
     return this._id;
+  }
+
+  set outgoingTeleport(request: TeleportRequest | undefined) {
+    if (this._outgoingTeleport !== request) {
+      this._outgoingTeleport = request;
+      this.emit('outgoingTeleportChange', request);
+    }
+  }
+
+  get outgoingTeleport(): TeleportRequest | undefined {
+    return this._outgoingTeleport;
+  }
+
+  get incomingTeleports(): TeleportRequest[] {
+    return this._incomingTeleports;
+  }
+
+  public addIncomingTeleport(request: TeleportRequest): void {
+    if (this._incomingTeleports.indexOf(request) === -1) {
+      this._incomingTeleports.push(request);
+      this.emit('incomingTeleportsChange', this._incomingTeleports);
+    }
+  }
+
+  public removeIncomingTeleport(request: TeleportRequest): void {
+    const newIncomingList = this._incomingTeleports.filter(teleport => teleport !== request);
+    if (!_.isEqual(this._incomingTeleports, newIncomingList)) {
+      this._incomingTeleports = newIncomingList;
+      this.emit('incomingTeleportsChange', this._incomingTeleports);
+    }
   }
 
   toPlayerModel(): PlayerModel {

@@ -13,6 +13,7 @@ import {
   ChatMessage,
   CoveyTownSocket,
   PlayerLocation,
+  TeleportRequest,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
@@ -88,6 +89,27 @@ export type TownEvents = {
    * @param obj the interactable that is being interacted with
    */
   interact: <T extends Interactable>(typeName: T['name'], obj: T) => void;
+  /**
+   * An event that indicates that a player has requested to teleport to a different player.  This event is emitted
+   * when a player clicks the teleport request button.
+   */
+  teleportRequest: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has cancled their request to teleport to a different player. This event
+   * is emitted when a player clicks the cancle teleport button.
+   */
+  teleportCanceled: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has accepted a teleport request from a different player. This event is
+   * emitted when the player clicks the accept button on the toast popup.
+   */
+  teleportAccepted: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has denied a teleport request from a different player. This event is
+   * emitted when the player clicks the denied button on the toast popup, or when the player does not respond
+   * within 30 seconds.
+   */
+  teleportDenied: (request: TeleportRequest) => void;
 };
 
 /**
@@ -398,7 +420,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this.emit('playerMoved', newPlayer);
       }
     });
-
     /**
      * When an interactable's state changes, push that update into the relevant controller, which is assumed
      * to be either a Viewing Area or a Conversation Area, and which is assumed to already be represented by a
@@ -429,6 +450,48 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         updatedViewingArea?.updateFrom(interactable);
       }
     });
+    /**
+     * When a teleport is requested from a player, check if the request is to our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportRequest', request => {
+      if (request.toPlayerId === this.ourPlayer.id) {
+        this.ourPlayer.addIncomingTeleport(request);
+      }
+    });
+    /**
+     * When a teleport is canceled from a player, check if the request is to our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportCanceled', request => {
+      if (request.toPlayerId === this.ourPlayer.id) {
+        this.ourPlayer.removeIncomingTeleport(request);
+      }
+    });
+    /**
+     * When a teleport is accepted from a player, check if the request is from our player. If it is, update our player's
+     * request list and update the location of our player to the location of the other player.
+     */
+    this._socket.on('teleportAccepted', request => {
+      if (request.fromPlayerId === this.ourPlayer.id) {
+        const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
+        if (otherPlayer.length === 1) {
+          const otherPlayerLocation = otherPlayer[0].location;
+          this.emitMovement(otherPlayerLocation);
+          this.ourPlayer.outgoingTeleport = undefined;
+        }
+      }
+    });
+    /**
+     * When a teleport is denied from a player, check if the request is from our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportDenied', request => {
+      if (request.fromPlayerId === this.ourPlayer.id) {
+        //TODO: Notify the user that their teleport has been denied
+        this.ourPlayer.outgoingTeleport = undefined;
+      }
+    });
   }
 
   /**
@@ -455,6 +518,70 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitChatMessage(message: ChatMessage) {
     this._socket.emit('chatMessage', message);
+  }
+
+  /**
+   * Emit a teleport request to the townService
+   * @param toPlayerId the player being requested
+   */
+  public emitTeleportRequest(toPlayerId: string) {
+    if (this._playerInSession(toPlayerId)) {
+      const request = {
+        fromPlayerId: this.ourPlayer.id,
+        toPlayerId: toPlayerId,
+        time: new Date(),
+      };
+      this.ourPlayer.outgoingTeleport = request;
+      this.emit('teleportRequest', request);
+    }
+    //TODO: Throw an error if the player is not in the session?
+  }
+
+  /**
+   * Emit a teleport canceled to the townService
+   * @param toPlayerId the player being requested
+   */
+  public emitTeleportCanceled(toPlayerId: string) {
+    if (this._playerInSession(toPlayerId)) {
+      const request = this.ourPlayer.outgoingTeleport;
+      this.ourPlayer.outgoingTeleport = undefined;
+      if (request) {
+        this.emit('teleportCanceled', request);
+      } else {
+        // This is a backup case, should never run if server is in sync
+        this.emit('teleportCanceled', {
+          fromPlayerId: this.ourPlayer.id,
+          toPlayerId: toPlayerId,
+          time: new Date(),
+        });
+      }
+    }
+    //TODO: Throw an error if the player is not in the session?
+  }
+
+  /**
+   * Emit a teleport accepted to the townService
+   * @param request the request being accepted
+   */
+  public emitTeleportAccepted(request: TeleportRequest) {
+    this.emit('teleportAccepted', request);
+  }
+
+  /**
+   * Emit a teleport denied to the townService
+   * @param request the request being denied
+   */
+  public emitTeleportDenied(request: TeleportRequest) {
+    this.emit('teleportDenied', request);
+  }
+
+  /**
+   * Checks to see if a player with the given id is in the session
+   * @param playerId the playerId to check
+   * @returns boolean representing if the player is in the session
+   */
+  private _playerInSession(playerId: string): boolean {
+    return this._playersByIDs([playerId]).length === 1;
   }
 
   /**
