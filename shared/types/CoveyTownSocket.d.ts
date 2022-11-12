@@ -82,6 +82,8 @@ export interface ServerToClientEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  teleportSuccess: (request: TeleportRequest) => void;
+  teleportFailed: (request: TeleportRequest) => void;
 }
 
 export interface ClientToServerEvents {
@@ -92,6 +94,8 @@ export interface ClientToServerEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  teleportSuccess: (request: TeleportRequest) => void;
+  teleportFailed: (request: TeleportRequest) => void;
 }
 
 export type TeleportRequest = {
