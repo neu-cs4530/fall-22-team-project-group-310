@@ -15,6 +15,7 @@ import {
   ChatMessage,
   Interactable,
   PlayerLocation,
+  TeleportRequest,
   TownEmitter,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
@@ -579,6 +580,70 @@ describe('Town', () => {
 
       const emittedMessage = getLastEmittedEvent(townEmitter, 'chatMessage');
       expect(emittedMessage).toEqual(chatMessage);
+    });
+    describe('teleportRequestListeners', () => {
+      const fromPlayerId = nanoid();
+      const toPlayerId = nanoid();
+      const currentTime = new Date();
+      const teleportRequest: TeleportRequest = {
+        fromPlayerId,
+        toPlayerId,
+        time: currentTime,
+      };
+      it('Forwards teleportRequests to all players in the same town', async () => {
+        const teleportRequestHandler = getEventListener(playerTestData.socket, 'teleportRequest');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportRequest')).toThrowError();
+        teleportRequestHandler(teleportRequest);
+
+        const emittedTeleportRequest = getLastEmittedEvent(townEmitter, 'teleportRequest');
+        expect(emittedTeleportRequest).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportRequest', 1)).toThrowError();
+      });
+      it('Forwards teleportCanceled to all players in the same town', async () => {
+        const teleportCancelHandler = getEventListener(playerTestData.socket, 'teleportCanceled');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportCanceled')).toThrowError();
+        teleportCancelHandler(teleportRequest);
+
+        const emittedTeleportCanceled = getLastEmittedEvent(townEmitter, 'teleportCanceled');
+        expect(emittedTeleportCanceled).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportCanceled', 1)).toThrowError();
+      });
+      it('Forwards teleportAccepted to all players in the same town', async () => {
+        const teleportAcceptedHandler = getEventListener(playerTestData.socket, 'teleportAccepted');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportAccepted')).toThrowError();
+        teleportAcceptedHandler(teleportRequest);
+
+        const emittedTeleportAccepted = getLastEmittedEvent(townEmitter, 'teleportAccepted');
+        expect(emittedTeleportAccepted).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportAccepted', 1)).toThrowError();
+      });
+      it('Forwards teleportDenied to all players in the same town', async () => {
+        const teleportDeniedHandler = getEventListener(playerTestData.socket, 'teleportDenied');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportDenied')).toThrowError();
+        teleportDeniedHandler(teleportRequest);
+
+        const emittedTeleportDenied = getLastEmittedEvent(townEmitter, 'teleportDenied');
+        expect(emittedTeleportDenied).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportDenied', 1)).toThrowError();
+      });
+      it('Forwards teleportSuccess to all players in the same town', async () => {
+        const teleportSuccessHandler = getEventListener(playerTestData.socket, 'teleportSuccess');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportSuccess')).toThrowError();
+        teleportSuccessHandler(teleportRequest);
+
+        const emittedTeleportSuccess = getLastEmittedEvent(townEmitter, 'teleportSuccess');
+        expect(emittedTeleportSuccess).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportSuccess', 1)).toThrowError();
+      });
+      it('Forwards teleportFailed to all players in the same town', async () => {
+        const teleportFailedHandler = getEventListener(playerTestData.socket, 'teleportFailed');
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportFailed')).toThrowError();
+        teleportFailedHandler(teleportRequest);
+
+        const emittedTeleportFailed = getLastEmittedEvent(townEmitter, 'teleportFailed');
+        expect(emittedTeleportFailed).toEqual(teleportRequest);
+        expect(() => getLastEmittedEvent(townEmitter, 'teleportFailed', 1)).toThrowError();
+      });
     });
   });
   describe('addConversationArea', () => {
