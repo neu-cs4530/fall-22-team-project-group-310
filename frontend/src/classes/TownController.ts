@@ -504,7 +504,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportDenied', request => {
-      if (request.fromPlayerId === this.ourPlayer.id) {
+      if (
+        request.fromPlayerId === this.ourPlayer.id &&
+        request === this.ourPlayer.outgoingTeleport
+      ) {
         //TODO: Notify the user that their teleport has been denied
         this.ourPlayer.outgoingTeleport = undefined;
       }
@@ -526,9 +529,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
         //TODO: Notify the user that the teleport failed
         //We have a couple of cases here that we need to figure out
-        //1) We requested to teleport and it failed
-        //2) We accepted the teleport and it failed
-        //3) We attempted to request to teleport and it failed (should this be a different event?)
+        //1) We requested to teleport and the other player's id was not in our local session
+        //2) The other player accepted the teleport and the other player is not in our local session to find location of
+        //3) The other player attempted to accept the teleport but could not since teleport was not in their incoming list
+        //4) The other player attempted to deny the teleport but could not since teleport was not in their incoming list
       }
     });
   }
@@ -590,21 +594,29 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
-   * Emit a teleport accepted to the townService
+   * Emit a teleport accepted to the townService if the request is in our player's incomingTeleportsList
    * @param request the request being accepted
    */
   public emitTeleportAccepted(request: TeleportRequest) {
-    this.ourPlayer.removeIncomingTeleport(request);
-    this.emit('teleportAccepted', request);
+    if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
+      this.ourPlayer.removeIncomingTeleport(request);
+      this.emit('teleportAccepted', request);
+    } else {
+      this.emit('teleportFailed', request);
+    }
   }
 
   /**
-   * Emit a teleport denied to the townService
+   * Emit a teleport denied to the townService if the request is in our player's incomingTeleportsList
    * @param request the request being denied
    */
   public emitTeleportDenied(request: TeleportRequest) {
-    this.ourPlayer.removeIncomingTeleport(request);
-    this.emit('teleportDenied', request);
+    if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
+      this.ourPlayer.removeIncomingTeleport(request);
+      this.emit('teleportDenied', request);
+    } else {
+      this.emit('teleportFailed', request);
+    }
   }
 
   /**
