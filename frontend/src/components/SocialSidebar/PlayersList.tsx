@@ -28,9 +28,9 @@ export default function PlayersInTownList(): JSX.Element {
   );
 
   useEffect(() => {
-    ourPlayer.addListener('outgoingTeleportChanged', setOutgoingTeleport);
+    ourPlayer.addListener('outgoingTeleportChange', setOutgoingTeleport);
     return () => {
-      ourPlayer.removeListener('outgoingTeleportChanged', setOutgoingTeleport);
+      ourPlayer.removeListener('outgoingTeleportChange', setOutgoingTeleport);
     };
   }, [ourPlayer]);
 
@@ -40,7 +40,6 @@ export default function PlayersInTownList(): JSX.Element {
         return (
           <Button
             onClick={() => {
-              console.log(`cancelled teleport to ${player.id}`);
               townController.emitTeleportCanceled(player.id);
             }}
             leftIcon={<Cancel fontSize='small' />}
@@ -54,7 +53,6 @@ export default function PlayersInTownList(): JSX.Element {
         return (
           <Button
             onClick={() => {
-              console.log(`requested teleport to ${player.id}`);
               townController.emitTeleportRequest(player.id);
             }}
             leftIcon={<MyLocation fontSize='small' />}
@@ -68,9 +66,6 @@ export default function PlayersInTownList(): JSX.Element {
       }
     }
   };
-
-  // disabled={outgoingTeleport !== undefined}
-  // townController.emitTeleportRequest(player.id)
 
   return (
     <Box>
