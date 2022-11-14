@@ -1,5 +1,5 @@
 import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
-import React from 'react';
+import React, { useState } from 'react';
 import useTownController from '../../hooks/useTownController';
 import { TeleportRequest } from '../../types/CoveyTownSocket';
 import TeleportRequestNotification from './TeleportRequestNotification';
@@ -10,16 +10,20 @@ import TeleportRequestNotification from './TeleportRequestNotification';
  * Relevant emits/listeners:
  */
 export default function TeleportRequestNotificationsList(): JSX.Element {
-  const { ourPlayer, players } = useTownController();
-  // const incomingTeleports = townController.ourPlayer.incomingTeleports;
-  const incomingTeleports: TeleportRequest[] = [
-    { fromPlayerId: players[0].id, toPlayerId: players[1].id, time: new Date() },
-  ];
+  const townController = useTownController();
+  const [incomingTeleports, setIncomingTeleports] = useState<TeleportRequest[]>(
+    townController.ourPlayer.incomingTeleports,
+  ); // todo figure out if useState is necessary or if useTownController will force rerender
 
   const sorted: TeleportRequest[] = incomingTeleports.concat([]);
-  // sorted.sort((tp1, tp2) => t1.time - tp2.time);
+  sorted.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
 
   // todo better way to key list items
+
+  townController.addListener(
+    'outgoingTeleportChange',
+    setIncomingTeleports(townController.ourPlayer.incomingTeleports),
+  );
 
   return (
     <Box>
