@@ -10,9 +10,9 @@ import TeleportRequestNotification from './TeleportRequestNotification';
  * Relevant emits/listeners:
  */
 export default function TeleportRequestNotificationsList(): JSX.Element {
-  const townController = useTownController();
+  const { ourPlayer } = useTownController();
   const [incomingTeleports, setIncomingTeleports] = useState<TeleportRequest[]>(
-    townController.ourPlayer.incomingTeleports,
+    ourPlayer.incomingTeleports,
   ); // todo figure out if useState is necessary or if useTownController will force rerender
 
   const sorted: TeleportRequest[] = incomingTeleports.concat([]);
@@ -20,10 +20,7 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
 
   // todo better way to key list items
 
-  townController.addListener(
-    'outgoingTeleportChange',
-    setIncomingTeleports(townController.ourPlayer.incomingTeleports),
-  );
+  ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
 
   return (
     <Box>
