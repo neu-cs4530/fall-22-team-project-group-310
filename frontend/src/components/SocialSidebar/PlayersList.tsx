@@ -53,6 +53,7 @@ export default function PlayersInTownList(): JSX.Element {
         return (
           <Button
             onClick={() => {
+              console.log('BREAK: emitTPRequest');
               townController.emitTeleportRequest(player.id);
             }}
             leftIcon={<MyLocation fontSize='small' />}

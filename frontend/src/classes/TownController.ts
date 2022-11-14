@@ -456,6 +456,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportRequest', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
+        console.log('BREAK: socket recieved tp request in towncontroller');
         this.ourPlayer.addIncomingTeleport(request);
       }
     });
@@ -465,6 +466,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportCanceled', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
+        console.log('BREAK: socket recieved tp cancelled in towncontroller');
+
         this.ourPlayer.removeIncomingTeleport(request);
       }
     });
@@ -525,6 +528,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param toPlayerId the player being requested
    */
   public emitTeleportRequest(toPlayerId: string) {
+    console.log('BREAK: emitTPRequest in townController');
     if (this._playerInSession(toPlayerId)) {
       const request = {
         fromPlayerId: this.ourPlayer.id,
@@ -542,6 +546,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param toPlayerId the player being requested
    */
   public emitTeleportCanceled(toPlayerId: string) {
+    console.log('BREAK: emitTPCancelled in townController');
+
     if (this._playerInSession(toPlayerId)) {
       const request = this.ourPlayer.outgoingTeleport;
       this.ourPlayer.outgoingTeleport = undefined;

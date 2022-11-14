@@ -70,6 +70,7 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   public addIncomingTeleport(request: TeleportRequest): void {
     if (this._incomingTeleports.indexOf(request) === -1) {
       this._incomingTeleports.push(request);
+      console.log('BREAK: addIncomingTeleport');
       this.emit('incomingTeleportsChange', this._incomingTeleports);
     }
   }
