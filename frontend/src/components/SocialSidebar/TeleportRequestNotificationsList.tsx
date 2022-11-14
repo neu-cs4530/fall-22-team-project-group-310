@@ -8,6 +8,7 @@ import TeleportRequestNotification from './TeleportRequestNotification';
  * Displays this Player's incoming teleport requests with confirm and deny buttons
  *
  * Relevant emits/listeners:
+ * PlayerController: incomingTeleportsChange
  */
 export default function TeleportRequestNotificationsList(): JSX.Element {
   const { ourPlayer } = useTownController();
@@ -15,10 +16,8 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
     ourPlayer.incomingTeleports,
   ); // todo figure out if useState is necessary or if useTownController will force rerender
 
-  const sorted: TeleportRequest[] = incomingTeleports.concat([]);
-  sorted.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
-
-  // todo better way to key list items
+  const sortedIncomingTeleports: TeleportRequest[] = incomingTeleports.concat([]);
+  sortedIncomingTeleports.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
 
   ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
 
@@ -29,9 +28,9 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
           Incoming Teleport Requests
         </Heading>
       </Tooltip>
-      {sorted ? (
+      {sortedIncomingTeleports ? (
         <OrderedList>
-          {sorted.map((incomingTeleport: TeleportRequest) => (
+          {sortedIncomingTeleports.map((incomingTeleport: TeleportRequest) => (
             <ListItem key={incomingTeleport.fromPlayerId}>
               <TeleportRequestNotification teleportRequest={incomingTeleport} />
             </ListItem>

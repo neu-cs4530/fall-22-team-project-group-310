@@ -7,6 +7,9 @@ import { TeleportRequest } from '../../types/CoveyTownSocket';
  * Displays this Player's incoming teleport requests with confirm and deny buttons
  *
  * Relevant emits/listeners:
+ * TownController:
+ * teleportAccepted
+ * teleportDenied
  */
 type TeleportRequestNotificationProps = {
   teleportRequest: TeleportRequest;
@@ -17,7 +20,6 @@ export default function TeleportRequestNotification({
 }: TeleportRequestNotificationProps): JSX.Element {
   const { players, emitTeleportAccepted, emitTeleportDenied } = useTownController();
   const fromPlayer = players.find(player => teleportRequest.fromPlayerId === player.id);
-  console.log(fromPlayer);
 
   return (
     <Box>
