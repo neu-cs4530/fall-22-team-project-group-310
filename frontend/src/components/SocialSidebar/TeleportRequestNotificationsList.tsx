@@ -1,9 +1,8 @@
 import { Box, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useTownController from '../../hooks/useTownController';
 import { TeleportRequest } from '../../types/CoveyTownSocket';
 import TeleportRequestNotification from './TeleportRequestNotification';
-
 /**
  * Displays this Player's incoming teleport requests with confirm and deny buttons
  *
@@ -19,7 +18,12 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
   const sortedIncomingTeleports: TeleportRequest[] = incomingTeleports.concat([]);
   sortedIncomingTeleports.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
 
-  ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
+  useEffect(() => {
+    ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
+    return () => {
+      ourPlayer.removeListener('incomingTeleportsChange', setIncomingTeleports);
+    };
+  }, [ourPlayer]);
 
   return (
     <Box>
