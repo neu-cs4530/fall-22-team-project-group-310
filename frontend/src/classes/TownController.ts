@@ -475,12 +475,11 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('teleportAccepted', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
         const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
-        if (otherPlayer.length !== 1) {
-          //TODO: What should we do if we dont have the other player?
+        if (otherPlayer.length === 1) {
+          const otherPlayerLocation = otherPlayer[0].location;
+          this.emitMovement(otherPlayerLocation);
+          this.ourPlayer.outgoingTeleport = undefined;
         }
-        const otherPlayerLocation = otherPlayer[0].location;
-        this.emitMovement(otherPlayerLocation);
-        this.ourPlayer.outgoingTeleport = undefined;
       }
     });
     /**

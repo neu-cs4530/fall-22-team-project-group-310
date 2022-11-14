@@ -1,9 +1,12 @@
 import EventEmitter from 'events';
+import _ from 'lodash';
 import TypedEmitter from 'typed-emitter';
 import { Player as PlayerModel, PlayerLocation, TeleportRequest } from '../types/CoveyTownSocket';
 
 export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
+  outgoingTeleportChange: (newRequest: TeleportRequest | undefined) => void;
+  incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
 };
 
 export type PlayerGameObjects = {
@@ -50,7 +53,10 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   set outgoingTeleport(request: TeleportRequest | undefined) {
-    this._outgoingTeleport = request;
+    if (this._outgoingTeleport !== request) {
+      this._outgoingTeleport = request;
+      this.emit('outgoingTeleportChange', request);
+    }
   }
 
   get outgoingTeleport(): TeleportRequest | undefined {
@@ -62,11 +68,18 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   public addIncomingTeleport(request: TeleportRequest): void {
-    this._incomingTeleports.push(request);
+    if (this._incomingTeleports.indexOf(request) === -1) {
+      this._incomingTeleports.push(request);
+      this.emit('incomingTeleportsChange', this._incomingTeleports);
+    }
   }
 
   public removeIncomingTeleport(request: TeleportRequest): void {
-    this._incomingTeleports.filter(teleport => teleport !== request);
+    const newIncomingList = this._incomingTeleports.filter(teleport => teleport !== request);
+    if (!_.isEqual(this._incomingTeleports, newIncomingList)) {
+      this._incomingTeleports = newIncomingList;
+      this.emit('incomingTeleportsChange', this._incomingTeleports);
+    }
   }
 
   toPlayerModel(): PlayerModel {
