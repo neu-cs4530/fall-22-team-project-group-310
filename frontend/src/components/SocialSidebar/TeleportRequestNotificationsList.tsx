@@ -13,15 +13,7 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
   const { ourPlayer } = useTownController();
   const [incomingTeleports, setIncomingTeleports] = useState<TeleportRequest[]>(
     ourPlayer.incomingTeleports,
-  ); // todo figure out if useState is necessary or if useTownController will force rerender
-
-  // const sortedIncomingTeleports: TeleportRequest[] = incomingTeleports.concat([]);
-  // sortedIncomingTeleports.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
-
-  // const updateIncomingTeleports = (newIncomingTeleports: TeleportRequest[]) => {
-  //   console.log('REEEEEEEEEEEEEEEEEE', incomingTeleports, newIncomingTeleports);
-  //   setIncomingTeleports(newIncomingTeleports);
-  // };
+  );
 
   useEffect(() => {
     ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
