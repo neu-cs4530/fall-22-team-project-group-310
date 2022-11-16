@@ -15,8 +15,13 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
     ourPlayer.incomingTeleports,
   ); // todo figure out if useState is necessary or if useTownController will force rerender
 
-  const sortedIncomingTeleports: TeleportRequest[] = incomingTeleports.concat([]);
-  sortedIncomingTeleports.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
+  // const sortedIncomingTeleports: TeleportRequest[] = incomingTeleports.concat([]);
+  // sortedIncomingTeleports.sort((tp1, tp2) => tp1.time.getTime() - tp2.time.getTime());
+
+  // const updateIncomingTeleports = (newIncomingTeleports: TeleportRequest[]) => {
+  //   console.log('REEEEEEEEEEEEEEEEEE', incomingTeleports, newIncomingTeleports);
+  //   setIncomingTeleports(newIncomingTeleports);
+  // };
 
   useEffect(() => {
     ourPlayer.addListener('incomingTeleportsChange', setIncomingTeleports);
@@ -32,16 +37,16 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
           Incoming Teleport Requests
         </Heading>
       </Tooltip>
-      {sortedIncomingTeleports ? (
+      {incomingTeleports.length > 0 ? (
         <OrderedList>
-          {sortedIncomingTeleports.map((incomingTeleport: TeleportRequest) => (
+          {incomingTeleports.map((incomingTeleport: TeleportRequest) => (
             <ListItem key={incomingTeleport.fromPlayerId}>
               <TeleportRequestNotification teleportRequest={incomingTeleport} />
             </ListItem>
           ))}
         </OrderedList>
       ) : (
-        <>No active conversation areas</>
+        <>No incoming teleporting requests</>
       )}
     </Box>
   );

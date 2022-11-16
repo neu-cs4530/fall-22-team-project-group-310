@@ -455,8 +455,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportRequest', request => {
+      console.log('BREAK: socket recieved tp request in towncontroller');
+
       if (request.toPlayerId === this.ourPlayer.id) {
-        console.log('BREAK: socket recieved tp request in towncontroller');
         this.ourPlayer.addIncomingTeleport(request);
       }
     });
@@ -465,9 +466,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportCanceled', request => {
-      if (request.toPlayerId === this.ourPlayer.id) {
-        console.log('BREAK: socket recieved tp cancelled in towncontroller');
+      console.log('BREAK: socket recieved tp cancelled in towncontroller');
 
+      if (request.toPlayerId === this.ourPlayer.id) {
         this.ourPlayer.removeIncomingTeleport(request);
       }
     });
@@ -536,7 +537,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         time: new Date(),
       };
       this.ourPlayer.outgoingTeleport = request;
-      this.emit('teleportRequest', request);
+      this._socket.emit('teleportRequest', request);
     }
     //TODO: Throw an error if the player is not in the session?
   }
@@ -552,10 +553,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       const request = this.ourPlayer.outgoingTeleport;
       this.ourPlayer.outgoingTeleport = undefined;
       if (request) {
-        this.emit('teleportCanceled', request);
+        this._socket.emit('teleportCanceled', request);
       } else {
         // This is a backup case, should never run if server is in sync
-        this.emit('teleportCanceled', {
+        this._socket.emit('teleportCanceled', {
           fromPlayerId: this.ourPlayer.id,
           toPlayerId: toPlayerId,
           time: new Date(),
@@ -570,7 +571,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param request the request being accepted
    */
   public emitTeleportAccepted(request: TeleportRequest) {
-    this.emit('teleportAccepted', request);
+    this._socket.emit('teleportAccepted', request);
   }
 
   /**
@@ -578,7 +579,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param request the request being denied
    */
   public emitTeleportDenied(request: TeleportRequest) {
-    this.emit('teleportDenied', request);
+    this._socket.emit('teleportDenied', request);
   }
 
   /**

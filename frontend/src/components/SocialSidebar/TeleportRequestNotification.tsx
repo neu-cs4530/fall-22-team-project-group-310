@@ -18,7 +18,8 @@ type TeleportRequestNotificationProps = {
 export default function TeleportRequestNotification({
   teleportRequest,
 }: TeleportRequestNotificationProps): JSX.Element {
-  const { players, emitTeleportAccepted, emitTeleportDenied } = useTownController();
+  const townController = useTownController();
+  const { players } = townController;
   const fromPlayer = players.find(player => teleportRequest.fromPlayerId === player.id);
 
   return (
@@ -29,10 +30,10 @@ export default function TeleportRequestNotification({
       <Button
         marginRight='10px'
         colorScheme='green'
-        onClick={() => emitTeleportAccepted(teleportRequest)}>
+        onClick={() => townController.emitTeleportAccepted(teleportRequest)}>
         Accept
       </Button>
-      <Button colorScheme='red' onClick={() => emitTeleportDenied(teleportRequest)}>
+      <Button colorScheme='red' onClick={() => townController.emitTeleportDenied(teleportRequest)}>
         Deny
       </Button>
     </Box>

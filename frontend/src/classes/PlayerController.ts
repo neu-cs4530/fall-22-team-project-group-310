@@ -68,14 +68,18 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   public addIncomingTeleport(request: TeleportRequest): void {
+    console.log('BREAK: addIncomingTeleport');
+
     if (this._incomingTeleports.indexOf(request) === -1) {
       this._incomingTeleports.push(request);
-      console.log('BREAK: addIncomingTeleport');
+      console.log('BREAK: emit incomingTeleportsChange *');
       this.emit('incomingTeleportsChange', this._incomingTeleports);
     }
   }
 
   public removeIncomingTeleport(request: TeleportRequest): void {
+    console.log('BREAK: removeIncomingTeleport');
+
     const newIncomingList = this._incomingTeleports.filter(teleport => teleport !== request);
     if (!_.isEqual(this._incomingTeleports, newIncomingList)) {
       this._incomingTeleports = newIncomingList;
