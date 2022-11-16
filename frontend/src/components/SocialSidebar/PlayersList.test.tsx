@@ -5,8 +5,8 @@ import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { nanoid } from 'nanoid';
 import React from 'react';
-import TownController, * as TownControllerHooks from '../../classes/TownController';
 import PlayerController from '../../classes/PlayerController';
+import TownController, * as TownControllerHooks from '../../classes/TownController';
 import * as useTownController from '../../hooks/useTownController';
 import { mockTownController } from '../../TestUtils';
 import { PlayerLocation } from '../../types/CoveyTownSocket';
@@ -34,6 +34,7 @@ describe('PlayersInTownList', () => {
   let players: PlayerController[] = [];
   let townID: string;
   let townFriendlyName: string;
+  let ourPlayer: PlayerController;
   const expectProperlyRenderedPlayersList = async (
     renderData: RenderResult,
     playersToExpect: PlayerController[],
@@ -56,9 +57,9 @@ describe('PlayersInTownList', () => {
     consoleErrorSpy = jest.spyOn(global.console, 'error');
     consoleErrorSpy.mockImplementation((message?, ...optionalParams) => {
       const stringMessage = message as string;
-      if (stringMessage.includes('children with the same key,')) {
+      if (stringMessage.includes && stringMessage.includes('children with the same key,')) {
         throw new Error(stringMessage.replace('%s', optionalParams[0]));
-      } else if (stringMessage.includes('warning-keys')) {
+      } else if (stringMessage.includes && stringMessage.includes('warning-keys')) {
         throw new Error(stringMessage.replace('%s', optionalParams[0]));
       }
       // eslint-disable-next-line no-console -- we are wrapping the console with a spy to find react warnings
@@ -79,10 +80,15 @@ describe('PlayersInTownList', () => {
         ),
       );
     }
+    ourPlayer = players[0];
     usePlayersSpy.mockReturnValue(players);
     townID = nanoid();
     townFriendlyName = nanoid();
-    const mockedTownController = mockTownController({ friendlyName: townFriendlyName, townID });
+    const mockedTownController = mockTownController({
+      friendlyName: townFriendlyName,
+      townID,
+      ourPlayer,
+    });
     useTownControllerSpy.mockReturnValue(mockedTownController);
   });
   describe('Heading', () => {

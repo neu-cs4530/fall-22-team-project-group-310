@@ -575,9 +575,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     };
     if (this._playerInSession(toPlayerId)) {
       this.ourPlayer.outgoingTeleport = request;
-      this.emit('teleportRequest', request);
+      this._socket.emit('teleportRequest', request);
     } else {
-      this.emit('teleportFailed', request);
+      this._socket.emit('teleportFailed', request);
     }
   }
 
@@ -588,7 +588,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportCanceled(toPlayerId: string) {
     const request = this.ourPlayer.outgoingTeleport;
     if (request && request.toPlayerId === toPlayerId) {
-      this.emit('teleportCanceled', request);
+      this._socket.emit('teleportCanceled', request);
       this.ourPlayer.outgoingTeleport = undefined;
     }
   }
@@ -600,9 +600,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportAccepted(request: TeleportRequest) {
     if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
       this.ourPlayer.removeIncomingTeleport(request);
-      this.emit('teleportAccepted', request);
+      this._socket.emit('teleportAccepted', request);
     } else {
-      this.emit('teleportFailed', request);
+      this._socket.emit('teleportFailed', request);
     }
   }
 
@@ -613,9 +613,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportDenied(request: TeleportRequest) {
     if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
       this.ourPlayer.removeIncomingTeleport(request);
-      this.emit('teleportDenied', request);
+      this._socket.emit('teleportDenied', request);
     } else {
-      this.emit('teleportFailed', request);
+      this._socket.emit('teleportFailed', request);
     }
   }
 
