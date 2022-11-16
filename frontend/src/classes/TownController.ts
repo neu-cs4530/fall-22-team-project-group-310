@@ -493,9 +493,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         if (otherPlayer.length === 1) {
           const otherPlayerLocation = otherPlayer[0].location;
           this.emitMovement(otherPlayerLocation);
-          this.emit('teleportSuccess', request);
+          this._socket.emit('teleportSuccess', request);
         } else {
-          this.emit('teleportFailed', request);
+          this._socket.emit('teleportFailed', request);
         }
       }
     });
