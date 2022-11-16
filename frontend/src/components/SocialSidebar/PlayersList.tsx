@@ -31,7 +31,9 @@ export default function PlayersInTownList(): JSX.Element {
     const updateOutgoingTeleport = (newOutgoingTeleport: TeleportRequest | undefined) => {
       if (!newOutgoingTeleport && outgoingTeleport) {
         toast({
-          title: 'ahhh',
+          title:
+            players.find((player: PlayerController) => player.id === outgoingTeleport.toPlayerId)
+              ?.userName + ' denied your teleport request',
           status: 'info',
         });
       }
