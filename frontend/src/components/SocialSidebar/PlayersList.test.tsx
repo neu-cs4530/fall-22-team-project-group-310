@@ -5,8 +5,8 @@ import { render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { nanoid } from 'nanoid';
 import React from 'react';
-import TownController, * as TownControllerHooks from '../../classes/TownController';
 import PlayerController from '../../classes/PlayerController';
+import TownController, * as TownControllerHooks from '../../classes/TownController';
 import * as useTownController from '../../hooks/useTownController';
 import { mockTownController } from '../../TestUtils';
 import { PlayerLocation } from '../../types/CoveyTownSocket';
@@ -34,6 +34,7 @@ describe('PlayersInTownList', () => {
   let players: PlayerController[] = [];
   let townID: string;
   let townFriendlyName: string;
+  let ourPlayer: PlayerController;
   const expectProperlyRenderedPlayersList = async (
     renderData: RenderResult,
     playersToExpect: PlayerController[],
@@ -79,10 +80,15 @@ describe('PlayersInTownList', () => {
         ),
       );
     }
+    ourPlayer = players[0];
     usePlayersSpy.mockReturnValue(players);
     townID = nanoid();
     townFriendlyName = nanoid();
-    const mockedTownController = mockTownController({ friendlyName: townFriendlyName, townID });
+    const mockedTownController = mockTownController({
+      friendlyName: townFriendlyName,
+      townID,
+      ourPlayer,
+    });
     useTownControllerSpy.mockReturnValue(mockedTownController);
   });
   describe('Heading', () => {
