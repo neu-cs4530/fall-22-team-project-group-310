@@ -85,6 +85,7 @@ type MockedTownControllerProperties = {
   players?: PlayerController[];
   conversationAreas?: ConversationAreaController[];
   viewingAreas?: ViewingAreaController[];
+  ourPlayer?: PlayerController;
 };
 export function mockTownController({
   friendlyName,
@@ -95,6 +96,7 @@ export function mockTownController({
   players,
   conversationAreas,
   viewingAreas,
+  ourPlayer,
 }: MockedTownControllerProperties) {
   const mockedController = mock<TownController>();
   if (friendlyName) {
@@ -116,6 +118,9 @@ export function mockTownController({
   }
   if (players) {
     Object.defineProperty(mockedController, 'players', { value: players });
+  }
+  if (ourPlayer) {
+    Object.defineProperty(mockedController, 'ourPlayer', { value: ourPlayer });
   }
   if (conversationAreas) {
     Object.defineProperty(mockedController, 'conversationAreas', { value: conversationAreas });
