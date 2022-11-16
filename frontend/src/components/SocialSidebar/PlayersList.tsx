@@ -1,4 +1,4 @@
-import { Box, Button, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
+import { Box, Button, Heading, ListItem, OrderedList, Tooltip, useToast } from '@chakra-ui/react';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
@@ -22,17 +22,28 @@ export default function PlayersInTownList(): JSX.Element {
   sorted.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
-
   const [outgoingTeleport, setOutgoingTeleport] = useState<TeleportRequest | undefined>(
     ourPlayer.outgoingTeleport,
   );
+  const toast = useToast();
 
   useEffect(() => {
-    ourPlayer.addListener('outgoingTeleportChange', setOutgoingTeleport);
-    return () => {
-      ourPlayer.removeListener('outgoingTeleportChange', setOutgoingTeleport);
+    const updateOutgoingTeleport = (newOutgoingTeleport: TeleportRequest | undefined) => {
+      if (!newOutgoingTeleport && outgoingTeleport) {
+        toast({
+          title: 'ahhh',
+          status: 'info',
+        });
+      }
+
+      setOutgoingTeleport(newOutgoingTeleport);
     };
-  }, [ourPlayer]);
+
+    ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
+    return () => {
+      ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
+    };
+  }, [ourPlayer, outgoingTeleport, toast]);
 
   const renderButtons = (player: PlayerController) => {
     if (player.id !== ourPlayer.id) {
