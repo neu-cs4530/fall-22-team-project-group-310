@@ -565,6 +565,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitTeleportAccepted(request: TeleportRequest) {
     this._socket.emit('teleportAccepted', request);
+    this.ourPlayer.removeIncomingTeleport(request);
   }
 
   /**
@@ -573,6 +574,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitTeleportDenied(request: TeleportRequest) {
     this._socket.emit('teleportDenied', request);
+    this.ourPlayer.removeIncomingTeleport(request);
   }
 
   /**
