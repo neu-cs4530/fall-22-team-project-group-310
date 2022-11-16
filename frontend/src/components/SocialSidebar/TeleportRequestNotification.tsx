@@ -1,4 +1,6 @@
 import { Box, Button, Tooltip } from '@chakra-ui/react';
+import Block from '@material-ui/icons/Block';
+import Check from '@material-ui/icons/Check';
 import React from 'react';
 import useTownController from '../../hooks/useTownController';
 import { TeleportRequest } from '../../types/CoveyTownSocket';
@@ -30,10 +32,14 @@ export default function TeleportRequestNotification({
       <Button
         marginRight='10px'
         colorScheme='green'
+        leftIcon={<Check fontSize='small' />}
         onClick={() => townController.emitTeleportAccepted(teleportRequest)}>
         Accept
       </Button>
-      <Button colorScheme='red' onClick={() => townController.emitTeleportDenied(teleportRequest)}>
+      <Button
+        colorScheme='red'
+        leftIcon={<Block fontSize='small' />}
+        onClick={() => townController.emitTeleportDenied(teleportRequest)}>
         Deny
       </Button>
     </Box>
