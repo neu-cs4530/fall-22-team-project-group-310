@@ -1,4 +1,4 @@
-import { Box, Button, Heading, ListItem, OrderedList, Tooltip, useToast } from '@chakra-ui/react';
+import { Box, Button, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
@@ -18,34 +18,21 @@ export default function PlayersInTownList(): JSX.Element {
   const players = usePlayers();
   const townController = useTownController();
   const { friendlyName, townID, ourPlayer } = townController;
-  const sorted = players.concat([]);
-  sorted.sort((p1, p2) =>
+  const sortedPlayers = players.concat([]);
+  sortedPlayers.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
+
   const [outgoingTeleport, setOutgoingTeleport] = useState<TeleportRequest | undefined>(
     ourPlayer.outgoingTeleport,
   );
-  const toast = useToast();
 
   useEffect(() => {
-    const updateOutgoingTeleport = (newOutgoingTeleport: TeleportRequest | undefined) => {
-      if (!newOutgoingTeleport && outgoingTeleport) {
-        toast({
-          title:
-            players.find((player: PlayerController) => player.id === outgoingTeleport.toPlayerId)
-              ?.userName + ' denied your teleport request',
-          status: 'info',
-        });
-      }
-
-      setOutgoingTeleport(newOutgoingTeleport);
-    };
-
-    ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
+    ourPlayer.addListener('outgoingTeleportChange', setOutgoingTeleport);
     return () => {
-      ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
+      ourPlayer.removeListener('outgoingTeleportChange', setOutgoingTeleport);
     };
-  }, [ourPlayer, outgoingTeleport, toast]);
+  }, [ourPlayer]);
 
   const renderButtons = (player: PlayerController) => {
     if (player.id !== ourPlayer.id) {
@@ -88,7 +75,7 @@ export default function PlayersInTownList(): JSX.Element {
         </Heading>
       </Tooltip>
       <OrderedList>
-        {sorted.map(player => (
+        {sortedPlayers.map(player => (
           <ListItem key={player.id}>
             <PlayerName player={player} />
             {renderButtons(player)}
