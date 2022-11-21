@@ -19,8 +19,8 @@ export default function PlayersInTownList(): JSX.Element {
   const players = usePlayers();
   const townController = useTownController();
   const { friendlyName, townID, ourPlayer } = townController;
-  const sorted = players.concat([]);
-  sorted.sort((p1, p2) =>
+  const sortedPlayers = players.concat([]);
+  sortedPlayers.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
   const [outgoingTeleport, setOutgoingTeleport] = useState<
@@ -98,7 +98,7 @@ export default function PlayersInTownList(): JSX.Element {
         </Heading>
       </Tooltip>
       <OrderedList>
-        {sorted.map(player => (
+        {sortedPlayers.map(player => (
           <ListItem key={player.id}>
             <PlayerName player={player} />
             {renderButtons(player)}

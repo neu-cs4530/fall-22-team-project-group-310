@@ -20,10 +20,13 @@ const useStyles = makeStyles((theme: Theme) => ({
   },
 }));
 
-function BackgroundSelectionDialog() {
-  const classes = useStyles();
-  const { isBackgroundSelectionOpen, setIsBackgroundSelectionOpen } = useVideoContext();
+interface BackgroundSelectionDialogProps {
+  isBackgroundSelectionOpen: boolean;
+  setIsBackgroundSelectionOpen: (value: boolean) => void;
+}
 
+function BackgroundSelectionDialog({isBackgroundSelectionOpen, setIsBackgroundSelectionOpen} : BackgroundSelectionDialogProps) {
+  const classes = useStyles();
   const imageNames = backgroundConfig.imageNames;
   const images = backgroundConfig.images;
 
