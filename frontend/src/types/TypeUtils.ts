@@ -13,3 +13,10 @@ export function isConversationArea(interactable: Interactable): interactable is 
 export function isViewingArea(interactable: Interactable): interactable is ViewingArea {
   return 'isPlaying' in interactable;
 }
+
+export enum PreviousTeleportRequestStatus {
+  Default = 'default',
+  Cancelled = 'cancelled',
+  Accepted = 'accepted',
+  Denied = 'denied',
+}

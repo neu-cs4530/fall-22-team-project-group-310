@@ -17,7 +17,11 @@ import {
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
-import { isConversationArea, isViewingArea } from '../types/TypeUtils';
+import {
+  isConversationArea,
+  isViewingArea,
+  PreviousTeleportRequestStatus,
+} from '../types/TypeUtils';
 import ConversationAreaController from './ConversationAreaController';
 import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
@@ -500,7 +504,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
         if (otherPlayer) {
           this._teleportOurPlayerTo(otherPlayer[0].location);
-          this.ourPlayer.outgoingTeleport = undefined;
+          this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
         }
       }
     });
@@ -512,7 +516,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('teleportDenied', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
         //TODO: Notify the user that their teleport has been denied
-        this.ourPlayer.outgoingTeleport = undefined;
+        this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
       }
     });
   }
@@ -567,8 +571,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportCanceled(toPlayerId: string) {
     if (this._playerInSession(toPlayerId)) {
       const request = this.ourPlayer.outgoingTeleport;
-      this.ourPlayer.outgoingTeleport = undefined;
-      if (request) {
+      this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Cancelled;
+      if (typeof request !== 'string') {
         this._socket.emit('teleportCanceled', request);
       } else {
         // This is a backup case, should never run if server is in sync

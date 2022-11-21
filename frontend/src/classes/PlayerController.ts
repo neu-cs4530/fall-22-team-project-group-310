@@ -2,10 +2,11 @@ import EventEmitter from 'events';
 import _ from 'lodash';
 import TypedEmitter from 'typed-emitter';
 import { Player as PlayerModel, PlayerLocation, TeleportRequest } from '../types/CoveyTownSocket';
+import { PreviousTeleportRequestStatus } from '../types/TypeUtils';
 
 export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
-  outgoingTeleportChange: (newRequest: TeleportRequest | undefined) => void;
+  outgoingTeleportChange: (newRequest: TeleportRequest | PreviousTeleportRequestStatus) => void;
   incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
 };
 
@@ -25,7 +26,8 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   private _incomingTeleports: TeleportRequest[] = [];
 
-  private _outgoingTeleport: TeleportRequest | undefined = undefined;
+  private _outgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus =
+    PreviousTeleportRequestStatus.Default;
 
   constructor(id: string, userName: string, location: PlayerLocation) {
     super();
@@ -52,14 +54,14 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
     return this._id;
   }
 
-  set outgoingTeleport(request: TeleportRequest | undefined) {
+  set outgoingTeleport(request: TeleportRequest | PreviousTeleportRequestStatus) {
     if (this._outgoingTeleport !== request) {
       this._outgoingTeleport = request;
       this.emit('outgoingTeleportChange', request);
     }
   }
 
-  get outgoingTeleport(): TeleportRequest | undefined {
+  get outgoingTeleport(): TeleportRequest | PreviousTeleportRequestStatus {
     return this._outgoingTeleport;
   }
 
