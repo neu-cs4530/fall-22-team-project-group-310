@@ -515,7 +515,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportDenied', request => {
       if (request.fromPlayerId === this.ourPlayer.id) {
-        //TODO: Notify the user that their teleport has been denied
         this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
       }
     });
@@ -561,7 +560,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       this.ourPlayer.outgoingTeleport = request;
       this._socket.emit('teleportRequest', request);
     }
-    //TODO: Throw an error if the player is not in the session?
   }
 
   /**
@@ -583,7 +581,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         });
       }
     }
-    //TODO: Throw an error if the player is not in the session?
   }
 
   /**
