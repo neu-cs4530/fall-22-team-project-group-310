@@ -1,4 +1,4 @@
-import { Box, Button, Heading, ListItem, OrderedList, Tooltip } from '@chakra-ui/react';
+import { Box, Button, Heading, ListItem, OrderedList, Tooltip, useToast } from '@chakra-ui/react';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
@@ -6,6 +6,7 @@ import PlayerController from '../../classes/PlayerController';
 import { usePlayers } from '../../classes/TownController';
 import useTownController from '../../hooks/useTownController';
 import { TeleportRequest } from '../../types/CoveyTownSocket';
+import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
 import PlayerName from './PlayerName';
 
 /**
@@ -22,21 +23,43 @@ export default function PlayersInTownList(): JSX.Element {
   sortedPlayers.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
-
-  const [outgoingTeleport, setOutgoingTeleport] = useState<TeleportRequest | undefined>(
-    ourPlayer.outgoingTeleport,
-  );
+  const [outgoingTeleport, setOutgoingTeleport] = useState<
+    TeleportRequest | PreviousTeleportRequestStatus
+  >(ourPlayer.outgoingTeleport);
+  const toast = useToast();
 
   useEffect(() => {
-    ourPlayer.addListener('outgoingTeleportChange', setOutgoingTeleport);
-    return () => {
-      ourPlayer.removeListener('outgoingTeleportChange', setOutgoingTeleport);
+    const updateOutgoingTeleport = (
+      newOutgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus,
+    ) => {
+      if (
+        typeof newOutgoingTeleport === 'string' &&
+        typeof outgoingTeleport !== 'string' &&
+        newOutgoingTeleport !== PreviousTeleportRequestStatus.Cancelled
+      ) {
+        toast({
+          title:
+            players.find((player: PlayerController) => player.id === outgoingTeleport.toPlayerId)
+              ?.userName +
+            ' ' +
+            newOutgoingTeleport +
+            ' your teleport request',
+          status: 'info',
+        });
+      }
+
+      setOutgoingTeleport(newOutgoingTeleport);
     };
-  }, [ourPlayer]);
+
+    ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
+    return () => {
+      ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
+    };
+  }, [ourPlayer, outgoingTeleport, toast, players]);
 
   const renderButtons = (player: PlayerController) => {
     if (player.id !== ourPlayer.id) {
-      if (outgoingTeleport && outgoingTeleport.toPlayerId === player.id) {
+      if (typeof outgoingTeleport !== 'string' && outgoingTeleport.toPlayerId === player.id) {
         return (
           <Button
             onClick={() => {
@@ -59,7 +82,7 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={outgoingTeleport !== undefined}>
+            disabled={typeof outgoingTeleport !== 'string'}>
             Teleport
           </Button>
         );
