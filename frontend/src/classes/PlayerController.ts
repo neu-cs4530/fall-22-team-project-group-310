@@ -30,13 +30,14 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   private _outgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus =
     PreviousTeleportRequestStatus.Default;
 
-  private _doNotDisturb = false;
+  private _doNotDisturb: boolean;
 
-  constructor(id: string, userName: string, location: PlayerLocation) {
+  constructor(id: string, userName: string, location: PlayerLocation, doNotDisturbState = false) {
     super();
     this._id = id;
     this._userName = userName;
     this._location = location;
+    this._doNotDisturb = doNotDisturbState;
   }
 
   set location(newLocation: PlayerLocation) {
@@ -101,7 +102,12 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   toPlayerModel(): PlayerModel {
-    return { id: this.id, userName: this.userName, location: this.location };
+    return {
+      id: this.id,
+      userName: this.userName,
+      location: this.location,
+      doNotDisturbState: this.doNotDisturb,
+    };
   }
 
   private _updateGameComponentLocation() {
@@ -122,6 +128,11 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   static fromPlayerModel(modelPlayer: PlayerModel): PlayerController {
-    return new PlayerController(modelPlayer.id, modelPlayer.userName, modelPlayer.location);
+    return new PlayerController(
+      modelPlayer.id,
+      modelPlayer.userName,
+      modelPlayer.location,
+      modelPlayer.doNotDisturbState,
+    );
   }
 }

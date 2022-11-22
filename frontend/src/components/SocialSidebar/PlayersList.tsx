@@ -110,7 +110,7 @@ export default function PlayersInTownList(): JSX.Element {
           size='sm'
           icon={<Block />}
           onClick={() => {
-            townController.emitDoNotDisturbChange(player.id);
+            townController.emitDoNotDisturbChange();
             townController.emitTeleportCanceled(player.id);
             player.incomingTeleports.map(request => {
               townController.emitTeleportDenied(request);
