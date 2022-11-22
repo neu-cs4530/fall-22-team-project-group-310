@@ -186,6 +186,13 @@ export default class Town {
       this._broadcastEmitter.emit('teleportDenied', request);
     });
 
+    /**
+     * Set up a listener to forward all doNotDisturbChange events to all clients in the town.
+     */
+    socket.on('doNotDisturbChange', (playerId: string) => {
+      this._broadcastEmitter.emit('doNotDisturbChange', playerId);
+    });
+
     return newPlayer;
   }
 

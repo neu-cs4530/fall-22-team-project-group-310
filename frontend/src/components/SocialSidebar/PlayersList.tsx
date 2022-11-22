@@ -26,6 +26,7 @@ export default function PlayersInTownList(): JSX.Element {
   const [outgoingTeleport, setOutgoingTeleport] = useState<
     TeleportRequest | PreviousTeleportRequestStatus
   >(ourPlayer.outgoingTeleport);
+  const [doNotDisturb, setDoNotDisturb] = useState<boolean>(ourPlayer.doNotDisturb);
   const toast = useToast();
 
   useEffect(() => {
@@ -52,8 +53,11 @@ export default function PlayersInTownList(): JSX.Element {
     };
 
     ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
+    ourPlayer.addListener('doNotDisturbChange', setDoNotDisturb);
+
     return () => {
       ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
+      ourPlayer.removeListener('doNotDisturbChange', setDoNotDisturb);
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
 
@@ -82,11 +86,24 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={typeof outgoingTeleport !== 'string'}>
+            disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}>
             Teleport
           </Button>
         );
       }
+    } else {
+      return (
+        <Button
+          onClick={() => {
+            townController.emitDoNotDisturbChange(player.id);
+          }}
+          leftIcon={<MyLocation fontSize='small' />}
+          size='xs'
+          colorScheme={'blue'}
+          margin='1.5'>
+          {ourPlayer.doNotDisturb ? 'Deactivate Do Not Disturb' : 'Activate Do Not Disturb'}
+        </Button>
+      );
     }
   };
 

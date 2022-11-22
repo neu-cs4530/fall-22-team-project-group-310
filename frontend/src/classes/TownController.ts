@@ -100,20 +100,25 @@ export type TownEvents = {
   teleportRequest: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has cancled their request to teleport to a different player. This event
-   * is emitted when a player clicks the cancle teleport button.
+   * is emitted when a player clicks the cancel teleport button.
    */
   teleportCanceled: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has accepted a teleport request from a different player. This event is
-   * emitted when the player clicks the accept button on the toast popup.
+   * emitted when the player clicks the accept button on the teleport accept display.
    */
   teleportAccepted: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has denied a teleport request from a different player. This event is
-   * emitted when the player clicks the denied button on the toast popup, or when the player does not respond
+   * emitted when the player clicks the denied button on the teleport accept display, or when the player does not respond
    * within 30 seconds.
    */
   teleportDenied: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has toggled their do not disturb mode. This event is
+   * emitted when the player clicks the do not disturb button next to their name.
+   */
+  doNotDisturbChange: (playerId: string) => void;
 };
 
 /**
@@ -518,6 +523,24 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
       }
     });
+
+    /**
+     * When do not disturb mode is toggled, update our players do not disturb status
+     */
+    this._socket.on('doNotDisturbChange', playerId => {
+      // if (playerId === this.ourPlayer.id) {
+      //   this.ourPlayer.doNotDisturb = !!this.ourPlayer.doNotDisturb;
+      // }
+      console.log('1', this.players);
+      this._players = this.players.map(player => {
+        if (playerId === player.id && playerId !== this.ourPlayer.id) {
+          player.doNotDisturb = !player.doNotDisturb;
+          return player;
+        }
+        return player;
+      });
+      console.log('2', this.players);
+    });
   }
 
   /**
@@ -599,6 +622,15 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportDenied(request: TeleportRequest) {
     this._socket.emit('teleportDenied', request);
     this.ourPlayer.removeIncomingTeleport(request);
+  }
+
+  /**
+   * Emit a do not disturb change to the townService
+   * @param request the request being denied
+   */
+  public emitDoNotDisturbChange(playerId: string) {
+    this._socket.emit('doNotDisturbChange', playerId);
+    this.ourPlayer.doNotDisturb = !this.ourPlayer.doNotDisturb;
   }
 
   /**

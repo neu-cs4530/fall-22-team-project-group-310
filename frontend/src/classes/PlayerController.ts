@@ -8,6 +8,7 @@ export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
   outgoingTeleportChange: (newRequest: TeleportRequest | PreviousTeleportRequestStatus) => void;
   incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
+  doNotDisturbChange: (newValue: boolean) => void;
 };
 
 export type PlayerGameObjects = {
@@ -28,6 +29,8 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   private _outgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus =
     PreviousTeleportRequestStatus.Default;
+
+  private _doNotDisturb = false;
 
   constructor(id: string, userName: string, location: PlayerLocation) {
     super();
@@ -67,6 +70,18 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   get incomingTeleports(): TeleportRequest[] {
     return this._incomingTeleports;
+  }
+
+  set doNotDisturb(newValue: boolean) {
+    // check if valid toggle before emitting
+    if (newValue !== this._doNotDisturb) {
+      this._doNotDisturb = newValue;
+      this.emit('doNotDisturbChange', newValue);
+    }
+  }
+
+  get doNotDisturb() {
+    return this._doNotDisturb;
   }
 
   public addIncomingTeleport(request: TeleportRequest): void {

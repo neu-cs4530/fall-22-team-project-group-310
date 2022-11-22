@@ -15,7 +15,7 @@ export type TownJoinResponse = {
   isPubliclyListed: boolean;
   /** Current state of interactables in this town */
   interactables: Interactable[];
-}
+};
 
 export type Interactable = ViewingArea | ConversationArea;
 
@@ -82,6 +82,7 @@ export interface ServerToClientEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  doNotDisturbChange: (playerId: string) => void;
 }
 
 export interface ClientToServerEvents {
@@ -92,6 +93,7 @@ export interface ClientToServerEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  doNotDisturbChange: (playerId: string) => void;
 }
 
 export type TeleportRequest = {
