@@ -15,7 +15,7 @@ describe('PlayerController', () => {
     playerId = nanoid();
     playerName = nanoid();
     location = { x: 0, y: 0, rotation: 'front', moving: false };
-    testPlayer = new PlayerController(playerId, playerName, location);
+    testPlayer = new PlayerController(playerId, playerName, location, false);
     testTeleportRequest = { fromPlayerId: nanoid(), toPlayerId: nanoid(), time: new Date() };
     expect(testPlayer.incomingTeleports).toStrictEqual([]);
     testPlayer.addIncomingTeleport(testTeleportRequest);
@@ -23,9 +23,11 @@ describe('PlayerController', () => {
     mockClear(mockListeners.movement);
     mockClear(mockListeners.outgoingTeleportChange);
     mockClear(mockListeners.incomingTeleportsChange);
+    mockClear(mockListeners.doNotDisturbChange);
     testPlayer.addListener('movement', mockListeners.movement);
     testPlayer.addListener('outgoingTeleportChange', mockListeners.outgoingTeleportChange);
     testPlayer.addListener('incomingTeleportsChange', mockListeners.incomingTeleportsChange);
+    testPlayer.addListener('doNotDisturbChange', mockListeners.doNotDisturbChange);
   });
   describe('Setting location property', () => {
     it('updates the property and emits a movemnt event', () => {
@@ -104,6 +106,22 @@ describe('PlayerController', () => {
       testPlayer.removeIncomingTeleport(request);
       expect(testPlayer.incomingTeleports).toStrictEqual([testTeleportRequest]);
       expect(mockListeners.incomingTeleportsChange).not.toBeCalled();
+    });
+  });
+  describe('setting doNotDisturb property', () => {
+    it('updates the property and emits a doNotDisturbChanged event if the value changes', () => {
+      expect(testPlayer.doNotDisturb).toEqual(false);
+      expect(mockListeners.doNotDisturbChange).not.toBeCalled();
+      testPlayer.doNotDisturb = true;
+      expect(testPlayer.doNotDisturb).toEqual(true);
+      expect(mockListeners.doNotDisturbChange).toHaveBeenCalledWith(true);
+    });
+    it('does not emit a doNotDisturbChanged event if the value does not change', () => {
+      expect(testPlayer.doNotDisturb).toEqual(false);
+      expect(mockListeners.doNotDisturbChange).not.toBeCalled();
+      testPlayer.doNotDisturb = false;
+      expect(testPlayer.doNotDisturb).toEqual(false);
+      expect(mockListeners.doNotDisturbChange).not.toBeCalled();
     });
   });
 });
