@@ -225,7 +225,7 @@ describe('TownController', () => {
             PreviousTeleportRequestStatus.Cancelled,
           );
         });
-        it('Does not emit teleportCanceled if the request to be caneled is undefined', () => {
+        it('Does not emit teleportCanceled if the request to be canceled is undefined', () => {
           expect(testController.ourPlayer.outgoingTeleport).toBe(
             PreviousTeleportRequestStatus.Default,
           );
@@ -235,7 +235,7 @@ describe('TownController', () => {
             PreviousTeleportRequestStatus.Default,
           );
         });
-        it('Does not emit teleportCanceled if the request to be caneled does not have the same id', () => {
+        it('Does not emit teleportCanceled if the request to be canceled does not have the same id', () => {
           testController.emitTeleportRequest(testController.players[1].id);
           const request = testController.ourPlayer.outgoingTeleport;
           expect(mockSocket.emit).toHaveBeenCalledWith('teleportRequest', request);
@@ -276,7 +276,7 @@ describe('TownController', () => {
           testController.emitTeleportAccepted(randomRequest);
           expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
           expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportAccepted', request);
-          expect(mockSocket.emit).toHaveBeenCalled(); // teleportFailed
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', randomRequest);
         });
         it('Emits teleportDenied event to the socket when a teleport in incoming list is denied', () => {
           expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
@@ -503,7 +503,7 @@ describe('TownController', () => {
           expect(testController.ourPlayer.outgoingTeleport).toBe(
             PreviousTeleportRequestStatus.Accepted,
           );
-          expect(mockSocket.emit).toHaveBeenCalled(); // teleportFailed
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', request);
         });
       });
     });
