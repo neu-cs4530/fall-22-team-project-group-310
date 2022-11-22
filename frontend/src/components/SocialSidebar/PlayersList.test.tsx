@@ -160,4 +160,12 @@ describe('PlayersInTownList', () => {
       await expectProperlyRenderedPlayersList(renderData, newPlayers);
     }
   });
+  describe('Do not disturb button', () => {
+    it('displays a do not disturb button next to our player in the town on first load', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
+      expect(doNotDisturbButton.length).toEqual(1);
+    });
+  });
 });

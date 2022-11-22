@@ -116,6 +116,7 @@ export default function PlayersInTownList(): JSX.Element {
               townController.emitTeleportDenied(request);
             });
           }}
+          data-testid='doNotDisturbButton'
         />
       );
     }
