@@ -454,7 +454,8 @@ describe('TownController', () => {
           testController.addListener('playerMoved', movedPlayerListener);
           testController.ourPlayer.outgoingTeleport = request;
           expect(testController.ourPlayer.outgoingTeleport).toBe(request);
-          expect(() => teleportAcceptedListener(request)).toThrowError(); // GameObjects not defined error
+          teleportAcceptedListener(request); // GameObjects not defined error
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', request); // Error getting caught and failed getting thrown
           // We cannot currently fully unit test the teleportAcceptedListener for the following reasons:
           // 1. The listener will call the _teleportOurPlayerTo method which requires PlayerController.gameObjects to be defined.
           // gameObjects are only defined in the TownFaneScene class in the create method and we cannot reuse Phaser to define the
