@@ -186,6 +186,20 @@ export default class Town {
       this._broadcastEmitter.emit('teleportDenied', request);
     });
 
+    /**
+     * Set up a listener to forward all teleportSuccess events to all clients in the town.
+     */
+    socket.on('teleportSuccess', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportSuccess', request);
+    });
+
+    /**
+     * Set up a listener to forward all teleportFailed events to all clients in the town.
+     */
+    socket.on('teleportFailed', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportFailed', request);
+    });
+
     return newPlayer;
   }
 
