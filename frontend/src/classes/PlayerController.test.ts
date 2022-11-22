@@ -1,9 +1,8 @@
-import { mock, mockClear, MockProxy } from 'jest-mock-extended';
+import { mock, mockClear } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import { PlayerLocation, TeleportRequest } from '../types/CoveyTownSocket';
 import { PreviousTeleportRequestStatus } from '../types/TypeUtils';
 import PlayerController, { PlayerEvents } from './PlayerController';
-import TownController from './TownController';
 
 describe('PlayerController', () => {
   let testPlayer: PlayerController;
@@ -11,7 +10,6 @@ describe('PlayerController', () => {
   let playerName: string;
   let location: PlayerLocation;
   let testTeleportRequest: TeleportRequest;
-  const townController: MockProxy<TownController> = mock<TownController>();
   const mockListeners = mock<PlayerEvents>();
   beforeEach(() => {
     playerId = nanoid();
@@ -22,7 +20,6 @@ describe('PlayerController', () => {
     expect(testPlayer.incomingTeleports).toStrictEqual([]);
     testPlayer.addIncomingTeleport(testTeleportRequest);
     expect(testPlayer.incomingTeleports).toStrictEqual([testTeleportRequest]);
-    mockClear(townController);
     mockClear(mockListeners.movement);
     mockClear(mockListeners.outgoingTeleportChange);
     mockClear(mockListeners.incomingTeleportsChange);
