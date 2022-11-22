@@ -528,10 +528,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * When do not disturb mode is toggled, update our players do not disturb status
      */
     this._socket.on('doNotDisturbChange', playerId => {
-      // if (playerId === this.ourPlayer.id) {
-      //   this.ourPlayer.doNotDisturb = !!this.ourPlayer.doNotDisturb;
-      // }
-      console.log('1', this.players);
       this._players = this.players.map(player => {
         if (playerId === player.id && playerId !== this.ourPlayer.id) {
           player.doNotDisturb = !player.doNotDisturb;
@@ -539,7 +535,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         }
         return player;
       });
-      console.log('2', this.players);
     });
   }
 

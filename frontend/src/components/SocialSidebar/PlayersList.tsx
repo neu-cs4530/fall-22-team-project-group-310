@@ -1,6 +1,16 @@
-import { Box, Button, Heading, ListItem, OrderedList, Tooltip, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Heading,
+  ListItem,
+  OrderedList,
+  Tooltip,
+  useToast,
+  IconButton,
+} from '@chakra-ui/react';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
+import Block from '@material-ui/icons/Block';
 import React, { useEffect, useState } from 'react';
 import PlayerController from '../../classes/PlayerController';
 import { usePlayers } from '../../classes/TownController';
@@ -93,16 +103,16 @@ export default function PlayersInTownList(): JSX.Element {
       }
     } else {
       return (
-        <Button
+        <IconButton
+          variant={ourPlayer.doNotDisturb ? 'solid' : 'noOutline'}
+          colorScheme='blue'
+          aria-label='Call Sage'
+          size='sm'
+          icon={<Block />}
           onClick={() => {
             townController.emitDoNotDisturbChange(player.id);
           }}
-          leftIcon={<MyLocation fontSize='small' />}
-          size='xs'
-          colorScheme={'blue'}
-          margin='1.5'>
-          {ourPlayer.doNotDisturb ? 'Deactivate Do Not Disturb' : 'Activate Do Not Disturb'}
-        </Button>
+        />
       );
     }
   };
