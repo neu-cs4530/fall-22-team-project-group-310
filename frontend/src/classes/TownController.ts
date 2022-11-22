@@ -511,18 +511,23 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list and update the location of our player to the location of the other player.
      */
     this._socket.on('teleportAccepted', request => {
-      if (
-        request.fromPlayerId === this.ourPlayer.id &&
-        request === this.ourPlayer.outgoingTeleport
-      ) {
-        const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
-        this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
-        if (otherPlayer.length === 1) {
-          this._teleportOurPlayerTo(otherPlayer[0].location);
-          this._socket.emit('teleportSuccess', request);
-        } else {
-          this._socket.emit('teleportFailed', request);
+      try {
+        const currentRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+        if (
+          request.fromPlayerId === this.ourPlayer.id &&
+          request.toPlayerId === currentRequest.toPlayerId
+        ) {
+          const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
+          this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
+          if (otherPlayer.length === 1) {
+            this._teleportOurPlayerTo(otherPlayer[0].location);
+            this._socket.emit('teleportSuccess', request);
+          } else {
+            this._socket.emit('teleportFailed', request);
+          }
         }
+      } catch (e) {
+        this._socket.emit('teleportFailed', request);
       }
     });
 
@@ -531,12 +536,16 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportDenied', request => {
-      if (
-        request.fromPlayerId === this.ourPlayer.id &&
-        request === this.ourPlayer.outgoingTeleport
-      ) {
-        //TODO: Notify the user that their teleport has been denied
-        this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
+      try {
+        const currentRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+        if (
+          request.fromPlayerId === this.ourPlayer.id &&
+          request.toPlayerId === currentRequest.toPlayerId
+        ) {
+          this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
+        }
+      } catch (e) {
+        // Do nothing, request already cleared on our end
       }
     });
     /**
