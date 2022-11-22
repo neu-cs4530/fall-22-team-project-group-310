@@ -187,10 +187,25 @@ export default class Town {
     });
 
     /**
+     * Set up a listener to forward all teleportSuccess events to all clients in the town.
+     */
+    socket.on('teleportSuccess', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportSuccess', request);
+    });
+
+    /**
+     * Set up a listener to forward all teleportFailed events to all clients in the town.
+     */
+    socket.on('teleportFailed', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportFailed', request);
+    });
+
+    /**
      * Set up a listener to forward all doNotDisturbChange events to all clients in the town.
      */
-    socket.on('doNotDisturbChange', (playerId: string) => {
-      this._broadcastEmitter.emit('doNotDisturbChange', playerId);
+    socket.on('doNotDisturbChange', (state: boolean) => {
+      newPlayer.doNotDisturbState = state;
+      this._broadcastEmitter.emit('doNotDisturbChange', { playerId: newPlayer.id, state });
     });
 
     return newPlayer;

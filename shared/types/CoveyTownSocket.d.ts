@@ -29,6 +29,7 @@ export interface Player {
   id: string;
   userName: string;
   location: PlayerLocation;
+  doNotDisturbState: boolean;
 };
 
 export type XY = { x: number, y: number };
@@ -82,7 +83,9 @@ export interface ServerToClientEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
-  doNotDisturbChange: (playerId: string) => void;
+  doNotDisturbChange: (playerInfo: DoNotDisturbInfo) => void;
+  teleportSuccess: (request: TeleportRequest) => void;
+  teleportFailed: (request: TeleportRequest) => void;
 }
 
 export interface ClientToServerEvents {
@@ -93,11 +96,18 @@ export interface ClientToServerEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
-  doNotDisturbChange: (playerId: string) => void;
+  doNotDisturbChange: (state: boolean) => void;
+  teleportSuccess: (request: TeleportRequest) => void;
+  teleportFailed: (request: TeleportRequest) => void;
 }
 
 export type TeleportRequest = {
   fromPlayerId: string;
   toPlayerId: string;
   time: Date;
+}
+
+export type DoNotDisturbInfo = {
+  playerId: string
+  state: boolean;
 }

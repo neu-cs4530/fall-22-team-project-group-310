@@ -115,10 +115,21 @@ export type TownEvents = {
    */
   teleportDenied: (request: TeleportRequest) => void;
   /**
+   * An event that indicates that a player has successfully teleported to another player. This event is
+   * emitted in the teleportAccepted listener if the 'from' player teleported to the 'to' player.
+   */
+  teleportSuccess: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has failed to teleport to another player. This event is
+   * emitted in the teleportAccepted listener if the 'from' player for some reason could not teleport to
+   * or find the location of the 'to' player.
+   */
+  teleportFailed: (request: TeleportRequest) => void;
+  /**
    * An event that indicates that a player has toggled their do not disturb mode. This event is
    * emitted when the player clicks the do not disturb button next to their name.
    */
-  doNotDisturbChange: (playerId: string) => void;
+  doNotDisturbChange: (state: boolean) => void;
 };
 
 /**
@@ -505,12 +516,23 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list and update the location of our player to the location of the other player.
      */
     this._socket.on('teleportAccepted', request => {
-      if (request.fromPlayerId === this.ourPlayer.id) {
-        const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
-        if (otherPlayer) {
-          this._teleportOurPlayerTo(otherPlayer[0].location);
+      try {
+        const currentRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+        if (
+          request.fromPlayerId === this.ourPlayer.id &&
+          request.toPlayerId === currentRequest.toPlayerId
+        ) {
+          const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
           this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
+          if (otherPlayer.length === 1) {
+            this._teleportOurPlayerTo(otherPlayer[0].location);
+            this._socket.emit('teleportSuccess', request);
+          } else {
+            this._socket.emit('teleportFailed', request);
+          }
         }
+      } catch (e) {
+        this._socket.emit('teleportFailed', request);
       }
     });
 
@@ -519,18 +541,49 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * request list.
      */
     this._socket.on('teleportDenied', request => {
-      if (request.fromPlayerId === this.ourPlayer.id) {
-        this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
+      try {
+        const currentRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+        if (
+          request.fromPlayerId === this.ourPlayer.id &&
+          request.toPlayerId === currentRequest.toPlayerId
+        ) {
+          this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
+        }
+      } catch (e) {
+        // Do nothing, request already cleared on our end
+      }
+    });
+    /**
+     * When a teleport is sucessful, check if the request had to do with our player. If it does, perform
+     * some sort of UI display indicating that the teleport was sucessful.
+     */
+    this._socket.on('teleportSuccess', request => {
+      if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
+        //TODO: Notify the user that the teleport was successful
+      }
+    });
+    /**
+     * When a teleport fails, check if the request had to do with our player. If it does, perform
+     * some sort of UI display indicating that the teleport failed.
+     */
+    this._socket.on('teleportFailed', request => {
+      if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
+        //TODO: Notify the user that the teleport failed
+        //We have a couple of cases here that we need to figure out
+        //1) We requested to teleport and the other player's id was not in our local session
+        //2) The other player accepted the teleport and the other player is not in our local session to find location of
+        //3) The other player attempted to accept the teleport but could not since teleport was not in their incoming list
+        //4) The other player attempted to deny the teleport but could not since teleport was not in their incoming list
       }
     });
 
     /**
      * When do not disturb mode is toggled, update our players do not disturb status
      */
-    this._socket.on('doNotDisturbChange', playerId => {
+    this._socket.on('doNotDisturbChange', playerInfo => {
       this._players = this.players.map(player => {
-        if (playerId === player.id && playerId !== this.ourPlayer.id) {
-          player.doNotDisturb = !player.doNotDisturb;
+        if (playerInfo.playerId === player.id && playerInfo.playerId !== this.ourPlayer.id) {
+          player.doNotDisturb = playerInfo.state;
           return player;
         }
         return player;
@@ -569,14 +622,16 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param toPlayerId the player being requested
    */
   public emitTeleportRequest(toPlayerId: string) {
+    const request = {
+      fromPlayerId: this.ourPlayer.id,
+      toPlayerId: toPlayerId,
+      time: new Date(),
+    };
     if (this._playerInSession(toPlayerId)) {
-      const request = {
-        fromPlayerId: this.ourPlayer.id,
-        toPlayerId: toPlayerId,
-        time: new Date(),
-      };
       this.ourPlayer.outgoingTeleport = request;
       this._socket.emit('teleportRequest', request);
+    } else {
+      this._socket.emit('teleportFailed', request);
     }
   }
 
@@ -585,46 +640,45 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param toPlayerId the player being requested
    */
   public emitTeleportCanceled(toPlayerId: string) {
-    if (this._playerInSession(toPlayerId)) {
-      const request = this.ourPlayer.outgoingTeleport;
+    const request = this.ourPlayer.outgoingTeleport;
+    if (typeof request !== 'string' && request.toPlayerId === toPlayerId) {
+      this._socket.emit('teleportCanceled', request);
       this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Cancelled;
-      if (typeof request !== 'string') {
-        this._socket.emit('teleportCanceled', request);
-      } else {
-        // This is a backup case, should never run if server is in sync
-        this._socket.emit('teleportCanceled', {
-          fromPlayerId: this.ourPlayer.id,
-          toPlayerId: toPlayerId,
-          time: new Date(),
-        });
-      }
     }
   }
 
   /**
-   * Emit a teleport accepted to the townService
+   * Emit a teleport accepted to the townService if the request is in our player's incomingTeleportsList
    * @param request the request being accepted
    */
   public emitTeleportAccepted(request: TeleportRequest) {
-    this._socket.emit('teleportAccepted', request);
-    this.ourPlayer.removeIncomingTeleport(request);
+    if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
+      this.ourPlayer.removeIncomingTeleport(request);
+      this._socket.emit('teleportAccepted', request);
+    } else {
+      this._socket.emit('teleportFailed', request);
+    }
   }
 
   /**
-   * Emit a teleport denied to the townService
+   * Emit a teleport denied to the townService if the request is in our player's incomingTeleportsList
    * @param request the request being denied
    */
   public emitTeleportDenied(request: TeleportRequest) {
-    this._socket.emit('teleportDenied', request);
-    this.ourPlayer.removeIncomingTeleport(request);
+    if (this.ourPlayer.incomingTeleports.indexOf(request) !== -1) {
+      this.ourPlayer.removeIncomingTeleport(request);
+      this._socket.emit('teleportDenied', request);
+    } else {
+      this._socket.emit('teleportFailed', request);
+    }
   }
 
   /**
    * Emit a do not disturb change to the townService
    * @param request the request being denied
    */
-  public emitDoNotDisturbChange(playerId: string) {
-    this._socket.emit('doNotDisturbChange', playerId);
+  public emitDoNotDisturbChange() {
+    this._socket.emit('doNotDisturbChange', !this.ourPlayer.doNotDisturb);
     this.ourPlayer.doNotDisturb = !this.ourPlayer.doNotDisturb;
   }
 
