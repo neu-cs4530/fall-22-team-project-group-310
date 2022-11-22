@@ -1,7 +1,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
-import { render, RenderResult, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { nanoid } from 'nanoid';
 import React from 'react';
@@ -31,6 +31,7 @@ describe('PlayersInTownList', () => {
   let consoleErrorSpy: jest.SpyInstance<void, [message?: any, ...optionalParms: any[]]>;
   let usePlayersSpy: jest.SpyInstance<PlayerController[], []>;
   let useTownControllerSpy: jest.SpyInstance<TownController, []>;
+  let emitTeleportRequestSpy: jest.SpyInstance<TownController, []>;
   let players: PlayerController[] = [];
   let townID: string;
   let townFriendlyName: string;
@@ -67,6 +68,7 @@ describe('PlayersInTownList', () => {
     });
     usePlayersSpy = jest.spyOn(TownControllerHooks, 'usePlayers');
     useTownControllerSpy = jest.spyOn(useTownController, 'default');
+    emitTeleportRequestSpy = jest.spyOn(useTownController, 'emitTeleportRequest');
   });
 
   beforeEach(() => {
@@ -159,5 +161,66 @@ describe('PlayersInTownList', () => {
       renderData.rerender(wrappedPlayersListComponent());
       await expectProperlyRenderedPlayersList(renderData, newPlayers);
     }
+  });
+  // todo update above tests
+  describe('Teleport Tests', () => {
+    // beforeEach(() => {
+    //   emit
+    // })
+    it('displays a teleport request button next to each player in the town on first load', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      const listEntries = await renderData.findAllByRole('listitem');
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
+    });
+    it('changes teleport request buttons to teleport cancel button and emits teleport request event when clicked', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+
+      expect(renderData.queryAllByTestId('teleportCancelButton')).toEqual([]);
+
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+
+      act(() => {
+        fireEvent.click(teleportRequestButtons[0]);
+      });
+
+      expect(useTownController);
+      expect(renderData.queryAllByTestId('teleportCancelButton').length).toEqual(1);
+      // expect(newTeleportCancelButtons.length).toEqual(1);
+    });
+    it('changes teleport request buttons to teleport cancel button and emits teleport request event when clicked', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      ourPlayer.outgoingTeleport = {};
+
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+
+      expect(renderData.queryAllByTestId('teleportCancelButton')).toEqual([]);
+
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+
+      act(() => {
+        fireEvent.click(teleportRequestButtons[0]);
+      });
+
+      expect(useTownController);
+      expect(renderData.queryAllByTestId('teleportCancelButton').length).toEqual(1);
+      // expect(newTeleportCancelButtons.length).toEqual(1);
+    });
+    // it('disables teleport buttons next to each player in do not disturb mode', async () => {
+    //   const renderData = renderPlayersList();
+    //   await expectProperlyRenderedPlayersList(renderData, players);
+
+    //   const listEntries = await renderData.findAllByRole('listitem');
+    //   const teleportButtons = await renderData.getAllByTestId('teleportRequestButton');
+    //   expect(teleportButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
+    // });
   });
 });
