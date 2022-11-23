@@ -747,8 +747,22 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * to the login page
    */
   public disconnect() {
+    this._clearTeleports();
     this._socket.disconnect();
     this._loginController.setTownController(null);
+  }
+
+  /**
+   * When disconnecting from the town, clear all the teleports for our player. Decline all incoming
+   * and cancel the outgoing if needed.
+   */
+  private _clearTeleports(): void {
+    const inList = this.ourPlayer.incomingTeleports;
+    inList.forEach(request => this.emitTeleportDenied(request));
+    if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
+      const outRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+      this.emitTeleportCanceled(outRequest.toPlayerId);
+    }
   }
 
   /**
