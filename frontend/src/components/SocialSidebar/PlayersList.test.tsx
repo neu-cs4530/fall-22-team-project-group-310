@@ -31,7 +31,8 @@ describe('PlayersInTownList', () => {
   let consoleErrorSpy: jest.SpyInstance<void, [message?: any, ...optionalParms: any[]]>;
   let usePlayersSpy: jest.SpyInstance<PlayerController[], []>;
   let useTownControllerSpy: jest.SpyInstance<TownController, []>;
-  let emitTeleportRequestSpy: jest.SpyInstance<TownController, []>;
+  let emitTeleportRequestSpy: jest.SpyInstance<void, [string]>;
+  // let mockedTownController;
   let players: PlayerController[] = [];
   let townID: string;
   let townFriendlyName: string;
@@ -68,7 +69,7 @@ describe('PlayersInTownList', () => {
     });
     usePlayersSpy = jest.spyOn(TownControllerHooks, 'usePlayers');
     useTownControllerSpy = jest.spyOn(useTownController, 'default');
-    emitTeleportRequestSpy = jest.spyOn(useTownController, 'emitTeleportRequest');
+    emitTeleportRequestSpy = jest.spyOn(TownController.prototype, 'emitTeleportRequest');
   });
 
   beforeEach(() => {
@@ -176,13 +177,11 @@ describe('PlayersInTownList', () => {
 
       expect(teleportRequestButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
     });
-    it('changes teleport request buttons to teleport cancel button and emits teleport request event when clicked', async () => {
+    it('emits teleport request event when clicked', async () => {
       const renderData = renderPlayersList();
       await expectProperlyRenderedPlayersList(renderData, players);
 
       const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-
-      expect(renderData.queryAllByTestId('teleportCancelButton')).toEqual([]);
 
       expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
 
@@ -190,37 +189,17 @@ describe('PlayersInTownList', () => {
         fireEvent.click(teleportRequestButtons[0]);
       });
 
-      expect(useTownController);
+      expect(emitTeleportRequestSpy).toHaveBeenCalled();
       expect(renderData.queryAllByTestId('teleportCancelButton').length).toEqual(1);
       // expect(newTeleportCancelButtons.length).toEqual(1);
     });
-    it('changes teleport request buttons to teleport cancel button and emits teleport request event when clicked', async () => {
+    it('displays a teleport cancel button and disables other teleport buttons ', async () => {
       const renderData = renderPlayersList();
       await expectProperlyRenderedPlayersList(renderData, players);
 
-      ourPlayer.outgoingTeleport = {};
-
-      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-
-      expect(renderData.queryAllByTestId('teleportCancelButton')).toEqual([]);
-
-      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
-
-      act(() => {
-        fireEvent.click(teleportRequestButtons[0]);
-      });
-
-      expect(useTownController);
-      expect(renderData.queryAllByTestId('teleportCancelButton').length).toEqual(1);
-      // expect(newTeleportCancelButtons.length).toEqual(1);
+      const listEntries = await renderData.findAllByRole('listitem');
+      const teleportButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
     });
-    // it('disables teleport buttons next to each player in do not disturb mode', async () => {
-    //   const renderData = renderPlayersList();
-    //   await expectProperlyRenderedPlayersList(renderData, players);
-
-    //   const listEntries = await renderData.findAllByRole('listitem');
-    //   const teleportButtons = await renderData.getAllByTestId('teleportRequestButton');
-    //   expect(teleportButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
-    // });
   });
 });
