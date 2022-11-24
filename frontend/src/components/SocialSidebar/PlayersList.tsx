@@ -9,6 +9,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
+import Block from '@material-ui/icons/Block';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
@@ -92,12 +93,14 @@ export default function PlayersInTownList(): JSX.Element {
             onClick={() => {
               townController.emitTeleportRequest(player.id);
             }}
-            leftIcon={<MyLocation fontSize='small' />}
+            leftIcon={
+              player.doNotDisturb ? <Block fontSize='small' /> : <MyLocation fontSize='small' />
+            }
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
             disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}>
-            Teleport Request
+            {player.doNotDisturb ? 'Do Not Disturb' : 'Teleport Request'}
           </Button>
         );
       }
