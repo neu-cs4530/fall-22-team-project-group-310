@@ -1,16 +1,16 @@
 import {
-  Box,
   Button,
   Heading,
   ListItem,
   OrderedList,
+  StackDivider,
+  Switch,
   Tooltip,
   useToast,
-  IconButton,
+  VStack,
 } from '@chakra-ui/react';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
-import Block from '@material-ui/icons/Block';
 import React, { useEffect, useState } from 'react';
 import PlayerController from '../../classes/PlayerController';
 import { usePlayers } from '../../classes/TownController';
@@ -83,7 +83,7 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'red'}
             margin='1.5'>
-            Cancel
+            Cancel Request
           </Button>
         );
       } else {
@@ -97,46 +97,51 @@ export default function PlayersInTownList(): JSX.Element {
             colorScheme={'blue'}
             margin='1.5'
             disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}>
-            Teleport
+            Teleport Request
           </Button>
         );
       }
-    } else {
-      return (
-        <IconButton
-          variant={ourPlayer.doNotDisturb ? 'solid' : 'noOutline'}
-          colorScheme='blue'
-          aria-label='Call Sage'
-          size='sm'
-          icon={<Block />}
-          onClick={() => {
-            townController.emitDoNotDisturbChange();
-            townController.emitTeleportCanceled(player.id);
-            player.incomingTeleports.map(request => {
-              townController.emitTeleportDenied(request);
-            });
-          }}
-          data-testid='doNotDisturbButton'
-        />
-      );
     }
   };
 
   return (
-    <Box>
+    <VStack align={'left'} divider={<StackDivider borderColor='gray.200' />}>
       <Tooltip label={`Town ID: ${townID}`}>
         <Heading as='h2' fontSize='l'>
           Current town: {friendlyName}
         </Heading>
       </Tooltip>
       <OrderedList>
-        {sortedPlayers.map(player => (
-          <ListItem key={player.id}>
-            <PlayerName player={player} />
-            {renderButtons(player)}
-          </ListItem>
-        ))}
+        <ListItem>
+          <PlayerName player={ourPlayer}></PlayerName> {' (me) '}
+        </ListItem>
+        <ListItem>
+          <Switch
+            colorScheme='blue'
+            onChange={() => {
+              townController.emitDoNotDisturbChange();
+              townController.emitTeleportCanceled(ourPlayer.id);
+              ourPlayer.incomingTeleports.map(request => {
+                townController.emitTeleportDenied(request);
+              });
+            }}
+            marginRight={'2'}
+          />
+          {`Do Not Disturb ${ourPlayer.doNotDisturb ? 'On' : 'Off'}`}
+        </ListItem>
       </OrderedList>
-    </Box>
+      <OrderedList>
+        {sortedPlayers.map(player => {
+          if (player.id !== ourPlayer.id) {
+            return (
+              <ListItem key={player.id}>
+                <PlayerName player={player} />
+                {renderButtons(player)}
+              </ListItem>
+            );
+          }
+        })}
+      </OrderedList>
+    </VStack>
   );
 }
