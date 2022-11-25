@@ -41,12 +41,25 @@ describe('PlayersInTownList', () => {
   ) => {
     const listEntries = await renderData.findAllByRole('listitem');
     expect(listEntries.length).toBe(playersToExpect.length); // expect same number of players
+
+    // The first entry should always be ourPlayer
+    expect(listEntries[0]).toHaveTextContent(ourPlayer.userName);
+    let parentComponent = listEntries[0].parentNode;
+    if (parentComponent) {
+      expect(parentComponent.nodeName).toBe('OL'); // list items expected to be directly nested in an ordered list
+    }
+
+    listEntries.shift();
     const playersSortedCorrectly = playersToExpect
+      .filter(p => p.id !== ourPlayer.id)
       .map(p => p.userName)
       .sort((p1, p2) => p1.localeCompare(p2, undefined, { numeric: true, sensitivity: 'base' }));
+
+    expect(listEntries.length).toBe(playersSortedCorrectly.length);
+    // The rest of the list items should be sorted correctly
     for (let i = 0; i < playersSortedCorrectly.length; i += 1) {
       expect(listEntries[i]).toHaveTextContent(playersSortedCorrectly[i]);
-      const parentComponent = listEntries[i].parentNode;
+      parentComponent = listEntries[i].parentNode;
       if (parentComponent) {
         expect(parentComponent.nodeName).toBe('OL'); // list items expected to be directly nested in an ordered list
       }
@@ -154,7 +167,10 @@ describe('PlayersInTownList', () => {
     const renderData = renderPlayersList();
     await expectProperlyRenderedPlayersList(renderData, players);
     for (let i = 0; i < players.length; i += 1) {
-      const newPlayers = players.splice(i, 1);
+      let newPlayers = players.splice(i, 1);
+      if (newPlayers[0].id !== ourPlayer.id) {
+        newPlayers = newPlayers.concat([ourPlayer]);
+      }
       usePlayersSpy.mockReturnValue(newPlayers);
       renderData.rerender(wrappedPlayersListComponent());
       await expectProperlyRenderedPlayersList(renderData, newPlayers);
