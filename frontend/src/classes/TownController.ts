@@ -130,6 +130,11 @@ export type TownEvents = {
    * emitted when the player clicks the do not disturb button next to their name.
    */
   doNotDisturbChange: (state: boolean) => void;
+  /**
+   * An event that indicates that a player's outgoing teleport timer has changed. This event is
+   * emitted when the method handling timer incrementing runs.
+   */
+  outgoingTeleportTimerChange: (state: number | undefined) => void;
 };
 
 /**
@@ -231,6 +236,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   private _interactableEmitter = new EventEmitter();
 
   private _viewingAreas: ViewingAreaController[] = [];
+
+  private _ourPlayerOutgoingTeleportTimerInterval: NodeJS.Timer | undefined;
+
+  private _ourPlayerOutgoingTeleportTimerValue = 0;
 
   public constructor({ userName, townID, loginController }: ConnectionProperties) {
     super();
@@ -589,6 +598,19 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         return player;
       });
     });
+
+    /**
+     * When outgoing teleport timer changes, update our player's timer status
+     */
+    this._socket.on('outgoingTeleportTimerChange', playerInfo => {
+      this._players = this.players.map(player => {
+        if (playerInfo.playerId === player.id && playerInfo.playerId !== this.ourPlayer.id) {
+          player.outgoingTeleportTimer = playerInfo.state;
+          return player;
+        }
+        return player;
+      });
+    });
   }
 
   /**
@@ -675,11 +697,43 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
   /**
    * Emit a do not disturb change to the townService
-   * @param request the request being denied
    */
   public emitDoNotDisturbChange() {
     this._socket.emit('doNotDisturbChange', !this.ourPlayer.doNotDisturb);
     this.ourPlayer.doNotDisturb = !this.ourPlayer.doNotDisturb;
+  }
+
+  /**
+   * Emit a outgoing teleport timer change to the townService
+   * @param newValue the new timer value
+   */
+  public emitOutgoingTeleportTimerChange(newValue: number | undefined) {
+    if (!newValue) {
+      this.emitTeleportCanceled(this.ourPlayer.id);
+      this._socket.emit('outgoingTeleportTimerChange', undefined);
+      this.ourPlayer.outgoingTeleportTimer = undefined;
+      if (this._ourPlayerOutgoingTeleportTimerInterval) {
+        clearInterval(this._ourPlayerOutgoingTeleportTimerInterval);
+      }
+    } else {
+      this._socket.emit('outgoingTeleportTimerChange', newValue);
+      this.ourPlayer.outgoingTeleportTimer = newValue;
+    }
+  }
+
+  /**
+   * Start the outgoing teleport timer
+   * @param startValue the total time
+   */
+  public startOutgoingTeleportTimer(startValue: number) {
+    this._ourPlayerOutgoingTeleportTimerInterval = setInterval(() => {
+      this._ourPlayerOutgoingTeleportTimerValue -= 1;
+      this.emitOutgoingTeleportTimerChange(this._ourPlayerOutgoingTeleportTimerValue);
+      console.log(this._ourPlayerOutgoingTeleportTimerValue);
+    }, 1000);
+
+    this._ourPlayerOutgoingTeleportTimerValue = startValue;
+    this.emitOutgoingTeleportTimerChange(startValue);
   }
 
   /**

@@ -208,6 +208,14 @@ export default class Town {
       this._broadcastEmitter.emit('doNotDisturbChange', { playerId: newPlayer.id, state });
     });
 
+    /**
+     * Set up a listener to forward all outgoingTeleportTimerChange events to all clients in the town.
+     */
+    socket.on('outgoingTeleportTimerChange', (state: number | undefined) => {
+      newPlayer.outgoingTeleportTimerState = state;
+      this._broadcastEmitter.emit('outgoingTeleportTimerChange', { playerId: newPlayer.id, state });
+    });
+
     return newPlayer;
   }
 

@@ -38,6 +38,9 @@ export default function PlayersInTownList(): JSX.Element {
     TeleportRequest | PreviousTeleportRequestStatus
   >(ourPlayer.outgoingTeleport);
   const [doNotDisturb, setDoNotDisturb] = useState<boolean>(ourPlayer.doNotDisturb);
+  const [outgoingTeleportTimer, setOutgoingTeleportTimer] = useState<number | undefined>(
+    ourPlayer.outgoingTeleportTimer,
+  );
   const toast = useToast();
 
   useEffect(() => {
@@ -65,10 +68,12 @@ export default function PlayersInTownList(): JSX.Element {
 
     ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
     ourPlayer.addListener('doNotDisturbChange', setDoNotDisturb);
+    ourPlayer.addListener('outgoingTeleportTimerChange', setOutgoingTeleportTimer);
 
     return () => {
       ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
       ourPlayer.removeListener('doNotDisturbChange', setDoNotDisturb);
+      ourPlayer.addListener('outgoingTeleportTimerChange', setOutgoingTeleportTimer);
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
 
@@ -84,7 +89,7 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'red'}
             margin='1.5'>
-            Cancel Request
+            {`Cancel Request ${outgoingTeleportTimer}`}
           </Button>
         );
       } else {
@@ -92,6 +97,7 @@ export default function PlayersInTownList(): JSX.Element {
           <Button
             onClick={() => {
               townController.emitTeleportRequest(player.id);
+              townController.startOutgoingTeleportTimer(30);
             }}
             leftIcon={
               player.doNotDisturb ? <Block fontSize='small' /> : <MyLocation fontSize='small' />
