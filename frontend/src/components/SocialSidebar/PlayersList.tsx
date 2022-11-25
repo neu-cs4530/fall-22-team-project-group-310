@@ -133,18 +133,20 @@ export default function PlayersInTownList(): JSX.Element {
           {`Do Not Disturb ${ourPlayer.doNotDisturb ? 'On' : 'Off'}`}
         </ListItem>
       </OrderedList>
-      <OrderedList>
-        {sortedPlayers.map(player => {
-          if (player.id !== ourPlayer.id) {
-            return (
-              <ListItem key={player.id}>
-                <PlayerName player={player} />
-                {renderButtons(player)}
-              </ListItem>
-            );
-          }
-        })}
-      </OrderedList>
+      {sortedPlayers.length > 1 && (
+        <OrderedList>
+          {sortedPlayers.map(player => {
+            if (player.id !== ourPlayer.id) {
+              return (
+                <ListItem key={player.id}>
+                  <PlayerName player={player} />
+                  {renderButtons(player)}
+                </ListItem>
+              );
+            }
+          })}
+        </OrderedList>
+      )}
     </VStack>
   );
 }
