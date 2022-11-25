@@ -187,6 +187,13 @@ export default class Town {
     });
 
     /**
+     * Set up a listener to forward all teleportTimeout events to all clients in the town.
+     */
+    socket.on('teleportTimeout', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportTimeout', request);
+    });
+
+    /**
      * Set up a listener to forward all teleportSuccess events to all clients in the town.
      */
     socket.on('teleportSuccess', (request: TeleportRequest) => {

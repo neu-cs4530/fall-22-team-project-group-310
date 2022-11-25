@@ -19,4 +19,5 @@ export enum PreviousTeleportRequestStatus {
   Cancelled = 'cancelled',
   Accepted = 'accepted',
   Denied = 'denied',
+  Timeout = 'timed out',
 }

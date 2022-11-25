@@ -12,6 +12,7 @@ import useTownController from '../hooks/useTownController';
 import {
   ChatMessage,
   CoveyTownSocket,
+  OutgoingTeleportTimerInfo,
   PlayerLocation,
   TeleportRequest,
   TownSettingsUpdate,
@@ -110,10 +111,14 @@ export type TownEvents = {
   teleportAccepted: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has denied a teleport request from a different player. This event is
-   * emitted when the player clicks the denied button on the teleport accept display, or when the player does not respond
-   * within 30 seconds.
+   * emitted when the player clicks the denied button on the teleport accept display.
    */
   teleportDenied: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player's teleport request has timed out. This event is
+   * emitted when the requested player does not respond within 30 seconds.
+   */
+  teleportTimeout: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has successfully teleported to another player. This event is
    * emitted in the teleportAccepted listener if the 'from' player teleported to the 'to' player.
@@ -135,6 +140,11 @@ export type TownEvents = {
    * emitted when the method handling timer incrementing runs.
    */
   outgoingTeleportTimerChange: (state: number | undefined) => void;
+  /**
+   * An event that indicates that another player's outgoing teleport timer has changed. This event is
+   * emitted when the timer of a relevant incoming teleport is changed.
+   */
+  incomingTeleportTimerChange: (state: OutgoingTeleportTimerInfo) => void;
 };
 
 /**
@@ -533,6 +543,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         ) {
           const otherPlayer = this.players.filter(player => player.id === request.toPlayerId);
           this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
+          this.emitOutgoingTeleportTimerChange(undefined);
           if (otherPlayer.length === 1) {
             this._teleportOurPlayerTo(otherPlayer[0].location);
             this._socket.emit('teleportSuccess', request);
@@ -557,9 +568,19 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
           request.toPlayerId === currentRequest.toPlayerId
         ) {
           this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Denied;
+          this.emitOutgoingTeleportTimerChange(undefined);
         }
       } catch (e) {
         // Do nothing, request already cleared on our end
+      }
+    });
+    /**
+     * When a teleport is canceled from a player, check if the request is to our player. If it is, update our player's
+     * request list.
+     */
+    this._socket.on('teleportTimeout', request => {
+      if (request.toPlayerId === this.ourPlayer.id) {
+        this.ourPlayer.removeIncomingTeleport(request);
       }
     });
     /**
@@ -603,13 +624,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * When outgoing teleport timer changes, update our player's timer status
      */
     this._socket.on('outgoingTeleportTimerChange', playerInfo => {
-      this._players = this.players.map(player => {
-        if (playerInfo.playerId === player.id && playerInfo.playerId !== this.ourPlayer.id) {
-          player.outgoingTeleportTimer = playerInfo.state;
-          return player;
-        }
-        return player;
-      });
+      if (
+        this.ourPlayer.incomingTeleports.find(
+          (request: TeleportRequest) => playerInfo.playerId === request.fromPlayerId,
+        )
+      ) {
+        this.emit('incomingTeleportTimerChange', playerInfo);
+      }
     });
   }
 
@@ -664,6 +685,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitTeleportCanceled(toPlayerId: string) {
     const request = this.ourPlayer.outgoingTeleport;
     if (typeof request !== 'string' && request.toPlayerId === toPlayerId) {
+      this.emitOutgoingTeleportTimerChange(undefined);
       this._socket.emit('teleportCanceled', request);
       this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Cancelled;
     }
@@ -696,6 +718,17 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a teleport denied to the townService if the request is in our player's incomingTeleportsList
+   * @param request the request being denied
+   */
+  public emitTeleportTimeout() {
+    if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
+      this._socket.emit('teleportTimeout', this.ourPlayer.outgoingTeleport);
+      this.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Timeout;
+    }
+  }
+
+  /**
    * Emit a do not disturb change to the townService
    */
   public emitDoNotDisturbChange() {
@@ -709,7 +742,15 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public emitOutgoingTeleportTimerChange(newValue: number | undefined) {
     if (!newValue) {
-      this.emitTeleportCanceled(this.ourPlayer.id);
+      // console.log('newValue undefined');
+      this._socket.emit('outgoingTeleportTimerChange', undefined);
+      this.ourPlayer.outgoingTeleportTimer = undefined;
+      if (this._ourPlayerOutgoingTeleportTimerInterval) {
+        clearInterval(this._ourPlayerOutgoingTeleportTimerInterval);
+      }
+    } else if (newValue === 0) {
+      // console.log('newValue 0');
+      this.emitTeleportTimeout();
       this._socket.emit('outgoingTeleportTimerChange', undefined);
       this.ourPlayer.outgoingTeleportTimer = undefined;
       if (this._ourPlayerOutgoingTeleportTimerInterval) {
@@ -717,6 +758,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       }
     } else {
       this._socket.emit('outgoingTeleportTimerChange', newValue);
+      // console.log('outgoing teleport timer value', this._ourPlayerOutgoingTeleportTimerValue);
       this.ourPlayer.outgoingTeleportTimer = newValue;
     }
   }
@@ -726,10 +768,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param startValue the total time
    */
   public startOutgoingTeleportTimer(startValue: number) {
+    // console.log('start timer');
     this._ourPlayerOutgoingTeleportTimerInterval = setInterval(() => {
       this._ourPlayerOutgoingTeleportTimerValue -= 1;
       this.emitOutgoingTeleportTimerChange(this._ourPlayerOutgoingTeleportTimerValue);
-      console.log(this._ourPlayerOutgoingTeleportTimerValue);
     }, 1000);
 
     this._ourPlayerOutgoingTeleportTimerValue = startValue;

@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Heading,
   ListItem,
@@ -81,16 +82,19 @@ export default function PlayersInTownList(): JSX.Element {
     if (player.id !== ourPlayer.id) {
       if (typeof outgoingTeleport !== 'string' && outgoingTeleport.toPlayerId === player.id) {
         return (
-          <Button
-            onClick={() => {
-              townController.emitTeleportCanceled(player.id);
-            }}
-            leftIcon={<Cancel fontSize='small' />}
-            size='xs'
-            colorScheme={'red'}
-            margin='1.5'>
-            {`Cancel Request ${outgoingTeleportTimer}`}
-          </Button>
+          <>
+            <Button
+              onClick={() => {
+                townController.emitTeleportCanceled(player.id);
+              }}
+              leftIcon={<Cancel fontSize='small' />}
+              size='xs'
+              colorScheme={'red'}
+              margin='1.5'>
+              {`Cancel Request`}
+            </Button>
+            <Badge marginRight={'2'}>{outgoingTeleportTimer}</Badge>
+          </>
         );
       } else {
         return (
