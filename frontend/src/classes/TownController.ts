@@ -581,6 +581,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('teleportTimeout', request => {
       if (request.toPlayerId === this.ourPlayer.id) {
         this.ourPlayer.removeIncomingTeleport(request);
+        this.emit('teleportTimeout', request);
       }
     });
     /**
@@ -741,16 +742,14 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param newValue the new timer value
    */
   public emitOutgoingTeleportTimerChange(newValue: number | undefined) {
-    if (!newValue) {
-      // console.log('newValue undefined');
+    if (newValue === 0) {
+      this.emitTeleportTimeout();
       this._socket.emit('outgoingTeleportTimerChange', undefined);
       this.ourPlayer.outgoingTeleportTimer = undefined;
       if (this._ourPlayerOutgoingTeleportTimerInterval) {
         clearInterval(this._ourPlayerOutgoingTeleportTimerInterval);
       }
-    } else if (newValue === 0) {
-      // console.log('newValue 0');
-      this.emitTeleportTimeout();
+    } else if (!newValue) {
       this._socket.emit('outgoingTeleportTimerChange', undefined);
       this.ourPlayer.outgoingTeleportTimer = undefined;
       if (this._ourPlayerOutgoingTeleportTimerInterval) {
@@ -758,7 +757,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       }
     } else {
       this._socket.emit('outgoingTeleportTimerChange', newValue);
-      // console.log('outgoing teleport timer value', this._ourPlayerOutgoingTeleportTimerValue);
       this.ourPlayer.outgoingTeleportTimer = newValue;
     }
   }
@@ -768,7 +766,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param startValue the total time
    */
   public startOutgoingTeleportTimer(startValue: number) {
-    // console.log('start timer');
     this._ourPlayerOutgoingTeleportTimerInterval = setInterval(() => {
       this._ourPlayerOutgoingTeleportTimerValue -= 1;
       this.emitOutgoingTeleportTimerChange(this._ourPlayerOutgoingTeleportTimerValue);
