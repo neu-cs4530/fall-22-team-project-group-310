@@ -550,6 +550,34 @@ describe('TownController', () => {
           expect(testController.players).toStrictEqual(expectedList);
         });
       });
+      it('Removes all teleport events associated with another player when they disconnect', () => {
+        const outRequest: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        testController.ourPlayer.outgoingTeleport = outRequest;
+        const inRequest1: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        testController.ourPlayer.addIncomingTeleport(inRequest1);
+        const inRequest2: TeleportRequest = {
+          fromPlayerId: testController.players[2].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        testController.ourPlayer.addIncomingTeleport(inRequest2);
+        expect(testController.ourPlayer.outgoingTeleport).toBe(outRequest);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1, inRequest2]);
+        const playerDisconnectListener = getEventListener(mockSocket, 'playerDisconnect');
+        playerDisconnectListener(testController.players[2].toPlayerModel());
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Cancelled,
+        );
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1]);
+      });
     });
     describe('[T2] interactableUpdate events', () => {
       describe('Conversation Area updates', () => {
