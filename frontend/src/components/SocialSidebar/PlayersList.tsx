@@ -123,7 +123,9 @@ export default function PlayersInTownList(): JSX.Element {
             colorScheme='blue'
             onChange={() => {
               townController.emitDoNotDisturbChange();
-              townController.emitTeleportCanceled(ourPlayer.id);
+              if (typeof ourPlayer.outgoingTeleport !== 'string') {
+                townController.emitTeleportCanceled(ourPlayer.outgoingTeleport.toPlayerId);
+              }
               ourPlayer.incomingTeleports.map(request => {
                 townController.emitTeleportDenied(request);
               });
