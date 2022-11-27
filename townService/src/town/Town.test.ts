@@ -645,13 +645,14 @@ describe('Town', () => {
       expect(emittedTeleportFailed).toEqual(teleportRequest);
       expect(() => getLastEmittedEvent(townEmitter, 'teleportFailed', 1)).toThrowError();
     });
-    it('Forwards doNotDisturbChange to all players in the same town', async () => {
+    it('Forwards doNotDisturbChange to all players in the same town and updates local player state', async () => {
       const doNotDisturbHandler = getEventListener(playerTestData.socket, 'doNotDisturbChange');
       expect(() => getLastEmittedEvent(townEmitter, 'teleportFailed')).toThrowError();
       doNotDisturbHandler(true);
       const emittedDoNotDisturbChange = getLastEmittedEvent(townEmitter, 'doNotDisturbChange');
       expect(emittedDoNotDisturbChange).toEqual({ playerId: player.id, state: true });
       expect(() => getLastEmittedEvent(townEmitter, 'doNotDisturbChange', 1)).toThrowError();
+      expect(player.doNotDisturbState).toBe(true);
     });
   });
   describe('addConversationArea', () => {
