@@ -126,20 +126,10 @@ describe('TeleportRequestNotificationsList', () => {
     });
     useTownControllerSpy.mockReturnValue(mockedTownController);
   });
-  it('Renders no incoming teleports before any are added', async () => {
+  it('Renders incoming teleports', async () => {
     const renderData = renderTeleportRequestNotificationsList();
     await expectProperlyRenderedTeleportRequestNotificationsList(renderData, incomingTeleports);
   });
-  // it('Removes players from the list when they are removed from the town', async () => {
-  //   const renderData = renderTeleportRequestNotificationsList();
-  //   await expectProperlyRenderedTeleportRequestNotificationsList(renderData, players);
-  //   for (let i = 0; i < players.length; i += 1) {
-  //     const newPlayers = players.splice(i, 1);
-  //     usePlayersSpy.mockReturnValue(newPlayers);
-  //     renderData.rerender(wrappedTeleportRequestNotificationsListComponent());
-  //     await expectProperlyRenderedTeleportRequestNotificationsList(renderData, newPlayers);
-  //   }
-  // });
   it('Emits teleport accept event when accept is clicked', async () => {
     const renderData = renderTeleportRequestNotificationsList();
     await expectProperlyRenderedTeleportRequestNotificationsList(renderData, incomingTeleports);
