@@ -210,6 +210,26 @@ describe('PlayersInTownList', () => {
 
       expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
     });
+    it('emits teleport cancel event when clicked and is cancel button', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+
+      mockedTownController.ourPlayer.outgoingTeleport = {
+        fromPlayerId: players[0].id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
+      renderData.rerender(wrappedPlayersListComponent());
+
+      act(() => {
+        fireEvent.click(teleportRequestButtons[0]);
+      });
+
+      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalled();
+    });
     it('displays a teleport cancel button and disables other teleport buttons when outgoing teleport is pending', async () => {
       const renderData = renderPlayersList();
       await expectProperlyRenderedPlayersList(renderData, players);
@@ -235,7 +255,7 @@ describe('PlayersInTownList', () => {
         expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
       }
     });
-    it('displays all teleport buttons when outgoing teleport changes to PreviousTeleportRequestStatus "Default"', async () => {
+    it('displays all teleport buttons when outgoing teleport changes to PreviousTeleportRequestStatus', async () => {
       const renderData = renderPlayersList();
       await expectProperlyRenderedPlayersList(renderData, players);
 
@@ -248,39 +268,17 @@ describe('PlayersInTownList', () => {
         toPlayerId: players[1].id,
         time: new Date(),
       };
-      renderData.rerender(wrappedPlayersListComponent());
-      // mockedTownController.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
-      renderData.rerender(wrappedPlayersListComponent());
 
-      listEntries = await renderData.findAllByRole('listitem');
-      expect(players.length).toEqual(10);
-      expect(listEntries.length).toEqual(10);
-      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-      // expect(teleportRequestButtons.length).toEqual(listEntries.length - 2);
-
-      // check for cancel button
-      let teleportCancelButtons = await renderData.queryAllByTestId('teleportCancelButton');
-      // expect(teleportCancelButtons.length).toEqual(1);
-
-      // check for disabled teleport request buttons
-      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
-        // expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
-      }
-
-      // mockedTownController.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Accepted;
-      // renderData.rerender(wrappedPlayersListComponent());
       mockedTownController.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Default;
       renderData.rerender(wrappedPlayersListComponent());
 
+      // check for right number of teleport buttons
       listEntries = await renderData.findAllByRole('listitem');
-      expect(players.length).toEqual(10);
-      expect(listEntries.length).toEqual(10);
-      // teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-      // expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
 
       // check for cancel button
-      teleportCancelButtons = await renderData.queryAllByTestId('teleportCancelButton');
+      const teleportCancelButtons = await renderData.queryAllByTestId('teleportCancelButton');
       expect(teleportCancelButtons.length).toEqual(0);
 
       // check for disabled teleport request buttons
