@@ -670,7 +670,10 @@ describe('TownController', () => {
           };
           testController.ourPlayer.addIncomingTeleport(inRequest2);
           expect(testController.ourPlayer.outgoingTeleport).toBe(outRequest);
-          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1, inRequest2]);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([
+            inRequest1,
+            inRequest2,
+          ]);
           const playerDisconnectListener = getEventListener(mockSocket, 'playerDisconnect');
           playerDisconnectListener(testController.players[2].toPlayerModel());
           expect(testController.ourPlayer.outgoingTeleport).toBe(
@@ -770,7 +773,6 @@ describe('TownController', () => {
       });
       describe('teleportSuccess events', () => {
         let teleportSuccessListener: (request: TeleportRequest) => void;
-        const mockListeners = mock<TownEvents>();
         beforeEach(() => {
           teleportSuccessListener = getEventListener(mockSocket, 'teleportSuccess');
           mockClear(mockListeners.teleportSuccess);
@@ -809,7 +811,6 @@ describe('TownController', () => {
       });
       describe('teleportFailed events', () => {
         let teleportFailedListener: (request: TeleportRequest) => void;
-        const mockListeners = mock<TownEvents>();
         beforeEach(() => {
           teleportFailedListener = getEventListener(mockSocket, 'teleportFailed');
           mockClear(mockListeners.teleportFailed);
