@@ -68,7 +68,8 @@ export default function PlayersInTownList(): JSX.Element {
             leftIcon={<Cancel fontSize='small' />}
             size='xs'
             colorScheme={'red'}
-            margin='1.5'>
+            margin='1.5'
+            data-testid='teleportCancelButton'>
             Cancel
           </Button>
         );
@@ -82,7 +83,8 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={typeof outgoingTeleport !== 'string'}>
+            disabled={typeof outgoingTeleport !== 'string'}
+            data-testid='teleportRequestButton'>
             Teleport
           </Button>
         );
