@@ -150,7 +150,7 @@ export default function PlayersInTownList(): JSX.Element {
     return () => {
       townController.removeListener('teleportSuccess', successToast);
       townController.removeListener('teleportFailed', failedToast);
-      townController.addListener('teleportTimeout', timeoutToast);
+      townController.removeListener('teleportTimeout', timeoutToast);
     };
   }, [townController, toast, players, ourPlayer.id]);
 

@@ -1,19 +1,29 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
-import { act, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { nanoid } from 'nanoid';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import PlayerController from '../../classes/PlayerController';
-import TownController, * as TownControllerHooks from '../../classes/TownController';
+import * as TownControllerHooks from '../../classes/TownController';
+import TownController, { TownEvents } from '../../classes/TownController';
 import * as useTownController from '../../hooks/useTownController';
-import { mockTownController } from '../../TestUtils';
-import { PlayerLocation, TeleportRequest } from '../../types/CoveyTownSocket';
 import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
+import { EventNames, mockTownController } from '../../TestUtils';
+import { PlayerLocation, TeleportRequest } from '../../types/CoveyTownSocket';
 import * as PlayerName from './PlayerName';
 import PlayersList from './PlayersList';
+
+const mockToast = jest.fn();
+
+jest.mock('@chakra-ui/react', () => {
+  const ui = jest.requireActual('@chakra-ui/react');
+  return {
+    ...ui,
+    useToast: () => mockToast,
+  };
+});
 
 describe('PlayersInTownList', () => {
   const randomLocation = (): PlayerLocation => ({
@@ -38,6 +48,17 @@ describe('PlayersInTownList', () => {
   let townID: string;
   let townFriendlyName: string;
   let ourPlayer: PlayerController;
+  type TownEventName = keyof TownEvents;
+  let addListenerSpy: jest.SpyInstance<
+    TownController,
+    [event: TownEventName, listener: TownEvents[TownEventName]]
+  >;
+
+  let removeListenerSpy: jest.SpyInstance<
+    TownController,
+    [event: TownEventName, listener: TownEvents[TownEventName]]
+  >;
+
   const expectProperlyRenderedPlayersList = async (
     renderData: RenderResult,
     playersToExpect: PlayerController[],
@@ -106,7 +127,47 @@ describe('PlayersInTownList', () => {
       ourPlayer,
     });
     useTownControllerSpy.mockReturnValue(mockedTownController);
+
+    addListenerSpy = jest.spyOn(mockedTownController, 'addListener');
+    removeListenerSpy = jest.spyOn(mockedTownController, 'removeListener');
+
+    mockToast.mockReset();
   });
+
+  /**
+   * Retrieve the listener passed to "addListener" for a given eventName
+   * @throws Error if the addListener method was not invoked exactly once for the given eventName
+   */
+  function getSingleListenerAdded<Ev extends EventNames<TownEvents>>(
+    eventName: Ev,
+    spy = addListenerSpy,
+  ): TownEvents[Ev] {
+    const addedListeners = spy.mock.calls.filter(eachCall => eachCall[0] === eventName);
+    if (addedListeners.length !== 1) {
+      throw new Error(
+        `Expected to find exactly one addListener call for ${eventName} but found ${addedListeners.length}`,
+      );
+    }
+    return addedListeners[0][1] as unknown as TownEvents[Ev];
+  }
+  /**
+   * Retrieve the listener pased to "removeListener" for a given eventName
+   * @throws Error if the removeListener method was not invoked exactly once for the given eventName
+   */
+  function getSingleListenerRemoved<Ev extends EventNames<TownEvents>>(
+    eventName: Ev,
+  ): TownEvents[Ev] {
+    const removedListeners = removeListenerSpy.mock.calls.filter(
+      eachCall => eachCall[0] === eventName,
+    );
+    if (removedListeners.length !== 1) {
+      throw new Error(
+        `Expected to find exactly one removeListeners call for ${eventName} but found ${removedListeners.length}`,
+      );
+    }
+    return removedListeners[0][1] as unknown as TownEvents[Ev];
+  }
+
   describe('Heading', () => {
     it('Displays a heading "Current town: townName', async () => {
       const renderData = renderPlayersList();
@@ -398,6 +459,19 @@ describe('PlayersInTownList', () => {
 
       const teleportTimer = await renderData.getAllByTestId('timerDisplay');
       expect(teleportTimer.length).toBe(1);
+    });
+
+    it('adds and removes listeners for teleport tiemout, success, and failure', async () => {
+      renderPlayersList();
+
+      const successListenerAdded = getSingleListenerAdded('teleportSuccess');
+      const failedListenerAdded = getSingleListenerAdded('teleportFailed');
+      const timeoutListenerAdded = getSingleListenerAdded('teleportTimeout');
+
+      cleanup();
+      expect(getSingleListenerRemoved('teleportSuccess')).toBe(successListenerAdded);
+      expect(getSingleListenerRemoved('teleportFailed')).toBe(failedListenerAdded);
+      expect(getSingleListenerRemoved('teleportTimeout')).toBe(timeoutListenerAdded);
     });
   });
 });
