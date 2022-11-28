@@ -24,10 +24,15 @@ describe('PlayerController', () => {
     mockClear(mockListeners.outgoingTeleportChange);
     mockClear(mockListeners.incomingTeleportsChange);
     mockClear(mockListeners.doNotDisturbChange);
+    mockClear(mockListeners.outgoingTeleportTimerChange);
     testPlayer.addListener('movement', mockListeners.movement);
     testPlayer.addListener('outgoingTeleportChange', mockListeners.outgoingTeleportChange);
     testPlayer.addListener('incomingTeleportsChange', mockListeners.incomingTeleportsChange);
     testPlayer.addListener('doNotDisturbChange', mockListeners.doNotDisturbChange);
+    testPlayer.addListener(
+      'outgoingTeleportTimerChange',
+      mockListeners.outgoingTeleportTimerChange,
+    );
   });
   describe('Setting location property', () => {
     it('updates the property and emits a movemnt event', () => {
@@ -122,6 +127,25 @@ describe('PlayerController', () => {
       testPlayer.doNotDisturb = false;
       expect(testPlayer.doNotDisturb).toEqual(false);
       expect(mockListeners.doNotDisturbChange).not.toBeCalled();
+    });
+  });
+  describe('setting outgoingTeleportTimer property', () => {
+    it('updates the property and emits an outgoingTeleportTimerChange event if the value changes', () => {
+      expect(testPlayer.outgoingTeleportTimer).toBeUndefined();
+      expect(mockListeners.outgoingTeleportTimerChange).not.toBeCalled();
+      testPlayer.outgoingTeleportTimer = 30;
+      expect(testPlayer.outgoingTeleportTimer).toEqual(30);
+      expect(mockListeners.outgoingTeleportTimerChange).toHaveBeenCalledWith(30);
+      testPlayer.outgoingTeleportTimer = undefined;
+      expect(testPlayer.outgoingTeleportTimer).toBeUndefined();
+      expect(mockListeners.outgoingTeleportTimerChange).toHaveBeenCalledWith(undefined);
+    });
+    it('does not emit outgoingTeleportTimerChange an event if the value does not change', () => {
+      expect(testPlayer.outgoingTeleportTimer).toBeUndefined();
+      expect(mockListeners.outgoingTeleportTimerChange).not.toBeCalled();
+      testPlayer.outgoingTeleportTimer = undefined;
+      expect(testPlayer.outgoingTeleportTimer).toBeUndefined();
+      expect(mockListeners.outgoingTeleportTimerChange).not.toHaveBeenCalled();
     });
   });
 });

@@ -9,6 +9,7 @@ export type PlayerEvents = {
   outgoingTeleportChange: (newRequest: TeleportRequest | PreviousTeleportRequestStatus) => void;
   incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
   doNotDisturbChange: (newValue: boolean) => void;
+  outgoingTeleportTimerChange: (newValue: number | undefined) => void;
 };
 
 export type PlayerGameObjects = {
@@ -32,12 +33,21 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   private _doNotDisturb: boolean;
 
-  constructor(id: string, userName: string, location: PlayerLocation, doNotDisturbState = false) {
+  private _outgoingTeleportTimer: number | undefined;
+
+  constructor(
+    id: string,
+    userName: string,
+    location: PlayerLocation,
+    doNotDisturbState = false,
+    outgoingTeleportTimerState = undefined,
+  ) {
     super();
     this._id = id;
     this._userName = userName;
     this._location = location;
     this._doNotDisturb = doNotDisturbState;
+    this._outgoingTeleportTimer = outgoingTeleportTimerState;
   }
 
   set location(newLocation: PlayerLocation) {
@@ -83,6 +93,17 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   get doNotDisturb() {
     return this._doNotDisturb;
+  }
+
+  set outgoingTeleportTimer(newValue: number | undefined) {
+    if (newValue !== this._outgoingTeleportTimer) {
+      this._outgoingTeleportTimer = newValue;
+      this.emit('outgoingTeleportTimerChange', newValue);
+    }
+  }
+
+  get outgoingTeleportTimer() {
+    return this._outgoingTeleportTimer;
   }
 
   public addIncomingTeleport(request: TeleportRequest): void {

@@ -83,7 +83,9 @@ export interface ServerToClientEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  teleportTimeout: (request: TeleportRequest) => void;
   doNotDisturbChange: (playerInfo: DoNotDisturbInfo) => void;
+  outgoingTeleportTimerChange: (playerInfo: OutgoingTeleportTimerInfo) => void;
   teleportSuccess: (request: TeleportRequest) => void;
   teleportFailed: (request: TeleportRequest) => void;
 }
@@ -96,7 +98,9 @@ export interface ClientToServerEvents {
   teleportCanceled: (request: TeleportRequest) => void;
   teleportAccepted: (request: TeleportRequest) => void;
   teleportDenied: (request: TeleportRequest) => void;
+  teleportTimeout: (request: TeleportRequest) => void;
   doNotDisturbChange: (state: boolean) => void;
+  outgoingTeleportTimerChange: (state: number | undefined) => void;
   teleportSuccess: (request: TeleportRequest) => void;
   teleportFailed: (request: TeleportRequest) => void;
 }
@@ -110,4 +114,9 @@ export type TeleportRequest = {
 export type DoNotDisturbInfo = {
   playerId: string
   state: boolean;
+}
+
+export type OutgoingTeleportTimerInfo = {
+  playerId: string
+  state: number | undefined;
 }

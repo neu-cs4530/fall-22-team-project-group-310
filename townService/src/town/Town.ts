@@ -187,6 +187,13 @@ export default class Town {
     });
 
     /**
+     * Set up a listener to forward all teleportTimeout events to all clients in the town.
+     */
+    socket.on('teleportTimeout', (request: TeleportRequest) => {
+      this._broadcastEmitter.emit('teleportTimeout', request);
+    });
+
+    /**
      * Set up a listener to forward all teleportSuccess events to all clients in the town.
      */
     socket.on('teleportSuccess', (request: TeleportRequest) => {
@@ -206,6 +213,14 @@ export default class Town {
     socket.on('doNotDisturbChange', (state: boolean) => {
       newPlayer.doNotDisturbState = state;
       this._broadcastEmitter.emit('doNotDisturbChange', { playerId: newPlayer.id, state });
+    });
+
+    /**
+     * Set up a listener to forward all outgoingTeleportTimerChange events to all clients in the town.
+     */
+    socket.on('outgoingTeleportTimerChange', (state: number | undefined) => {
+      newPlayer.outgoingTeleportTimerState = state;
+      this._broadcastEmitter.emit('outgoingTeleportTimerChange', { playerId: newPlayer.id, state });
     });
 
     return newPlayer;

@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Heading,
   ListItem,
@@ -38,6 +39,9 @@ export default function PlayersInTownList(): JSX.Element {
     TeleportRequest | PreviousTeleportRequestStatus
   >(ourPlayer.outgoingTeleport);
   const [doNotDisturb, setDoNotDisturb] = useState<boolean>(ourPlayer.doNotDisturb);
+  const [outgoingTeleportTimer, setOutgoingTeleportTimer] = useState<number | undefined>(
+    ourPlayer.outgoingTeleportTimer,
+  );
   const toast = useToast();
 
   useEffect(() => {
@@ -47,7 +51,8 @@ export default function PlayersInTownList(): JSX.Element {
       if (
         typeof newOutgoingTeleport === 'string' &&
         typeof outgoingTeleport !== 'string' &&
-        newOutgoingTeleport !== PreviousTeleportRequestStatus.Cancelled
+        (newOutgoingTeleport === PreviousTeleportRequestStatus.Accepted ||
+          newOutgoingTeleport === PreviousTeleportRequestStatus.Denied)
       ) {
         toast({
           title:
@@ -58,6 +63,19 @@ export default function PlayersInTownList(): JSX.Element {
             ' your teleport request',
           status: 'info',
         });
+      } else if (
+        typeof newOutgoingTeleport === 'string' &&
+        typeof outgoingTeleport !== 'string' &&
+        newOutgoingTeleport === PreviousTeleportRequestStatus.Timeout
+      ) {
+        toast({
+          title:
+            'Your teleport request to ' +
+            players.find((player: PlayerController) => player.id === outgoingTeleport.toPlayerId)
+              ?.userName +
+            ' timed out.',
+          status: 'info',
+        });
       }
 
       setOutgoingTeleport(newOutgoingTeleport);
@@ -65,10 +83,12 @@ export default function PlayersInTownList(): JSX.Element {
 
     ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
     ourPlayer.addListener('doNotDisturbChange', setDoNotDisturb);
+    ourPlayer.addListener('outgoingTeleportTimerChange', setOutgoingTeleportTimer);
 
     return () => {
       ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
       ourPlayer.removeListener('doNotDisturbChange', setDoNotDisturb);
+      ourPlayer.addListener('outgoingTeleportTimerChange', setOutgoingTeleportTimer);
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
 
@@ -113,11 +133,24 @@ export default function PlayersInTownList(): JSX.Element {
       });
     };
 
+    const timeoutToast = (timedoutRequest: TeleportRequest) => {
+      toast({
+        title:
+          'The teleport request from ' +
+          players.find((player: PlayerController) => player.id === timedoutRequest.fromPlayerId)
+            ?.userName +
+          ' timed out.',
+        status: 'info',
+      });
+    };
+
     townController.addListener('teleportSuccess', successToast);
     townController.addListener('teleportFailed', failedToast);
+    townController.addListener('teleportTimeout', timeoutToast);
     return () => {
       townController.removeListener('teleportSuccess', successToast);
       townController.removeListener('teleportFailed', failedToast);
+      townController.removeListener('teleportTimeout', timeoutToast);
     };
   }, [townController, toast, players, ourPlayer.id]);
 
@@ -125,23 +158,29 @@ export default function PlayersInTownList(): JSX.Element {
     if (player.id !== ourPlayer.id) {
       if (typeof outgoingTeleport !== 'string' && outgoingTeleport.toPlayerId === player.id) {
         return (
-          <Button
-            onClick={() => {
-              townController.emitTeleportCanceled(player.id);
-            }}
-            leftIcon={<Cancel fontSize='small' />}
-            size='xs'
-            colorScheme={'red'}
-            margin='1.5'
-            data-testid='teleportCancelButton'>
-            Cancel
-          </Button>
+          <>
+            <Button
+              onClick={() => {
+                townController.emitTeleportCanceled(player.id);
+              }}
+              leftIcon={<Cancel fontSize='small' />}
+              size='xs'
+              colorScheme={'red'}
+              margin='1.5'
+              data-testid='teleportCancelButton'>
+              {`Cancel Request`}
+            </Button>
+            <Badge marginRight={'2'} data-testid='timerDisplay'>
+              {outgoingTeleportTimer}
+            </Badge>
+          </>
         );
       } else {
         return (
           <Button
             onClick={() => {
               townController.emitTeleportRequest(player.id);
+              townController.startOutgoingTeleportTimer(30);
             }}
             leftIcon={
               player.doNotDisturb ? <Block fontSize='small' /> : <MyLocation fontSize='small' />

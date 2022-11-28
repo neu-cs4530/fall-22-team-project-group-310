@@ -37,6 +37,7 @@ describe('TeleportRequestNotificationsList', () => {
     | [event: keyof PlayerEvents, newRequest: TeleportRequest | PreviousTeleportRequestStatus]
     | [event: keyof PlayerEvents, newIncomingList: TeleportRequest[]]
     | [event: keyof PlayerEvents, newValue: boolean]
+    | [event: keyof PlayerEvents, newValue: number | undefined]
   >;
   let mockedTownController: TownController;
   let players: PlayerController[] = [];
@@ -64,6 +65,15 @@ describe('TeleportRequestNotificationsList', () => {
         expect(parentComponent.nodeName).toBe('OL'); // list items expected to be directly nested in an ordered list
       }
     }
+
+    const denyButtons = await renderData.findAllByTestId('teleportDenyButton');
+    expect(denyButtons.length).toBe(teleportsToExpect.length);
+
+    const acceptButtons = await renderData.findAllByTestId('teleportAcceptButton');
+    expect(acceptButtons.length).toBe(teleportsToExpect.length);
+
+    const timers = await renderData.findAllByTestId('timerDisplay');
+    expect(timers.length).toBe(teleportsToExpect.length);
   };
   beforeAll(() => {
     // Spy on console.error and intercept react key warnings to fail test
