@@ -120,16 +120,12 @@ describe('PlayersInTownList', () => {
   });
 
   /**
-
    * Retrieve the listener passed to "addListener" for a given eventName
-
    * @throws Error if the addListener method was not invoked exactly once for the given eventName
-
    */
 
   function getSingleListenerAdded<Ev extends EventNames<TownEvents>>(
     eventName: Ev,
-
     spy = addListenerSpy,
   ): TownEvents[Ev] {
     const addedListeners = spy.mock.calls.filter(eachCall => eachCall[0] === eventName);
@@ -144,11 +140,8 @@ describe('PlayersInTownList', () => {
   }
 
   /**
-
    * Retrieve the listener pased to "removeListener" for a given eventName
-
    * @throws Error if the removeListener method was not invoked exactly once for the given eventName
-
    */
 
   function getSingleListenerRemoved<Ev extends EventNames<TownEvents>>(
