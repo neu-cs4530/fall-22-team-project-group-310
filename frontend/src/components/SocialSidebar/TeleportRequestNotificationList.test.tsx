@@ -1,8 +1,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
-import { act, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, RenderResult } from '@testing-library/react';
 import { nanoid } from 'nanoid';
 import React from 'react';
 import PlayerController, { PlayerEvents } from '../../classes/PlayerController';
@@ -11,7 +10,6 @@ import * as useTownController from '../../hooks/useTownController';
 import { mockTownController } from '../../TestUtils';
 import { PlayerLocation, TeleportRequest } from '../../types/CoveyTownSocket';
 import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
-import * as PlayerName from './PlayerName';
 import TeleportRequestNotificationsList from './TeleportRequestNotificationsList';
 
 describe('TeleportRequestNotificationsList', () => {
