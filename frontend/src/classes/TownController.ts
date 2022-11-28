@@ -452,11 +452,27 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       this.emit('playerMoved', newPlayerObj);
     });
     /**
-     * When a player disconnects from the town, update local state
+     * When a player disconnects from the town, update local state, remove teleports associated with the player
      *
      * Note that setting the players array will also emit an event that the players in the town have changed.
      */
     this._socket.on('playerDisconnect', disconnectedPlayer => {
+      if (this._ourPlayer !== undefined) {
+        const inList = this.ourPlayer.incomingTeleports;
+        if (inList.length > 0) {
+          inList.forEach(request => {
+            if (request.fromPlayerId === disconnectedPlayer.id) {
+              this.emitTeleportDenied(request);
+            }
+          });
+        }
+        if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
+          const outRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+          if (outRequest.toPlayerId === disconnectedPlayer.id) {
+            this.emitTeleportCanceled(outRequest.toPlayerId);
+          }
+        }
+      }
       this._players = this.players.filter(eachPlayer => eachPlayer.id !== disconnectedPlayer.id);
     });
     /**
@@ -839,7 +855,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * to the login page
    */
   public disconnect() {
-    this._clearTeleports();
     this._socket.disconnect();
     this._loginController.setTownController(null);
   }

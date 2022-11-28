@@ -31,7 +31,7 @@ export default function PlayersInTownList(): JSX.Element {
   const players = usePlayers();
   const townController = useTownController();
   const { friendlyName, townID, ourPlayer } = townController;
-  const sortedPlayers = players.concat([]);
+  const sortedPlayers = players.filter(p => p.id !== ourPlayer.id);
   sortedPlayers.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
@@ -159,35 +159,40 @@ export default function PlayersInTownList(): JSX.Element {
       </Tooltip>
       <OrderedList>
         <ListItem>
-          <PlayerName player={ourPlayer}></PlayerName> {' (me) '}
-        </ListItem>
-        <ListItem>
+          <div style={{ width: '100%' }}>
+            <PlayerName player={ourPlayer}></PlayerName> {' (me) '}
+          </div>
           <Switch
             colorScheme='blue'
             onChange={() => {
               townController.emitDoNotDisturbChange();
-              townController.emitTeleportCanceled(ourPlayer.id);
+              if (typeof ourPlayer.outgoingTeleport !== 'string') {
+                townController.emitTeleportCanceled(ourPlayer.outgoingTeleport.toPlayerId);
+              }
               ourPlayer.incomingTeleports.map(request => {
                 townController.emitTeleportDenied(request);
               });
             }}
             marginRight={'2'}
+            data-testid='doNotDisturbButton'
           />
           {`Do Not Disturb ${ourPlayer.doNotDisturb ? 'On' : 'Off'}`}
         </ListItem>
       </OrderedList>
-      <OrderedList>
-        {sortedPlayers.map(player => {
-          if (player.id !== ourPlayer.id) {
-            return (
-              <ListItem key={player.id}>
-                <PlayerName player={player} />
-                {renderButtons(player)}
-              </ListItem>
-            );
-          }
-        })}
-      </OrderedList>
+      {sortedPlayers.length > 0 && (
+        <OrderedList>
+          {sortedPlayers.map(player => {
+            if (player.id !== ourPlayer.id) {
+              return (
+                <ListItem key={player.id}>
+                  <PlayerName player={player} />
+                  {renderButtons(player)}
+                </ListItem>
+              );
+            }
+          })}
+        </OrderedList>
+      )}
     </VStack>
   );
 }
