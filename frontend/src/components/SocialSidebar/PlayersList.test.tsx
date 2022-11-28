@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
 import { act, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { mockReset } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import React from 'react';
 import PlayerController from '../../classes/PlayerController';
@@ -33,7 +32,6 @@ describe('PlayersInTownList', () => {
   let consoleErrorSpy: jest.SpyInstance<void, [message?: any, ...optionalParms: any[]]>;
   let usePlayersSpy: jest.SpyInstance<PlayerController[], []>;
   let useTownControllerSpy: jest.SpyInstance<TownController, []>;
-  // let emitTeleportRequestSpy: jest.SpyInstance<void, [string]>;
   let mockedTownController: TownController;
   let players: PlayerController[] = [];
   let townID: string;
