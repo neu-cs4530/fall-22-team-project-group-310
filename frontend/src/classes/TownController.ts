@@ -554,7 +554,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportSuccess', request => {
       if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
-        //TODO: Notify the user that the teleport was successful
+        this.emit('teleportSuccess', request);
       }
     });
     /**
@@ -563,12 +563,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportFailed', request => {
       if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
-        //TODO: Notify the user that the teleport failed
-        //We have a couple of cases here that we need to figure out
-        //1) We requested to teleport and the other player's id was not in our local session
-        //2) The other player accepted the teleport and the other player is not in our local session to find location of
-        //3) The other player attempted to accept the teleport but could not since teleport was not in their incoming list
-        //4) The other player attempted to deny the teleport but could not since teleport was not in their incoming list
+        this.emit('teleportFailed', request);
       }
     });
   }
