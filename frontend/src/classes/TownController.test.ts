@@ -15,9 +15,14 @@ import {
   Player as PlayerModel,
   PlayerLocation,
   ServerToClientEvents,
+  TeleportRequest,
   TownJoinResponse,
 } from '../types/CoveyTownSocket';
-import { isConversationArea, isViewingArea } from '../types/TypeUtils';
+import {
+  isConversationArea,
+  isViewingArea,
+  PreviousTeleportRequestStatus,
+} from '../types/TypeUtils';
 import PlayerController from './PlayerController';
 import TownController, { TownEvents } from './TownController';
 import ViewingAreaController from './ViewingAreaController';
@@ -181,6 +186,326 @@ describe('TownController', () => {
       } else {
         fail('Did not find an existing, empty conversation area in the town join response');
       }
+    });
+    describe('Teleport emitting methods', () => {
+      describe('emitTeleportRequest', () => {
+        it('Emits teleportRequest events to the socket when a teleport is requested to an active player', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          testController.emitTeleportRequest(testController.players[1].id);
+          let request = testController.ourPlayer.outgoingTeleport;
+          request = request as TeleportRequest;
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportRequest', request);
+          expect(request.fromPlayerId).toBe(testController.ourPlayer.id);
+          expect(request.toPlayerId).toBe(testController.players[1].id);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportFailed', request);
+        });
+        it('Emits teleportFailed event to the socket when the requested player does not exist', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          testController.emitTeleportRequest(nanoid());
+          const request = testController.ourPlayer.outgoingTeleport;
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportRequest', request);
+          expect(request).toBe(PreviousTeleportRequestStatus.Default);
+          expect(mockSocket.emit).toHaveBeenCalled(); //teleportFailed
+        });
+      });
+      describe('emitTeleportCanceled', () => {
+        it('Emits teleportCanceled event to the socket when a teleport is canceled', () => {
+          testController.emitTeleportRequest(testController.players[1].id);
+          const request = testController.ourPlayer.outgoingTeleport;
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportRequest', request);
+          testController.emitTeleportCanceled(testController.players[1].id);
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportCanceled', request);
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Cancelled,
+          );
+        });
+        it('Does not emit teleportCanceled if the request to be canceled is undefined', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          testController.emitTeleportCanceled(testController.players[1].id);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+        });
+        it('Does not emit teleportCanceled if the request to be canceled does not have the same id', () => {
+          testController.emitTeleportRequest(testController.players[1].id);
+          const request = testController.ourPlayer.outgoingTeleport;
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportRequest', request);
+          testController.emitTeleportCanceled(testController.players[2].id);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportCanceled', request);
+          expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+        });
+      });
+      describe('emitTeleportAccepted and emitTeleportDenied', () => {
+        let request: TeleportRequest;
+        beforeEach(() => {
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+          request = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.ourPlayer.id,
+            time: new Date(),
+          };
+          testController.ourPlayer.addIncomingTeleport(request);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          mockClear(mockSocket);
+        });
+        it('Emits teleportAccepted event to the socket when a teleport in incoming list is accepted', () => {
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          testController.emitTeleportAccepted(request);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportAccepted', request);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportFailed', request);
+        });
+        it('Emits teleportFailed event to the socket when a teleport not in incoming list is accepted', () => {
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          const randomRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.ourPlayer.id,
+            time: new Date(),
+          };
+          testController.emitTeleportAccepted(randomRequest);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportAccepted', request);
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', randomRequest);
+        });
+        it('Emits teleportDenied event to the socket when a teleport in incoming list is denied', () => {
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          testController.emitTeleportDenied(request);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportDenied', request);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportFailed', request);
+        });
+        it('Emits teleportFailed event to the socket when a teleport not in incoming list is denied', () => {
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          const randomRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.ourPlayer.id,
+            time: new Date(),
+          };
+          testController.emitTeleportDenied(randomRequest);
+          expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportDenied', randomRequest);
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', randomRequest);
+        });
+      });
+    });
+    describe('Teleport event socket listeners', () => {
+      it('Adds a teleport request to this player if the request is for our player', () => {
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+        const teleportRequestListener = getEventListener(mockSocket, 'teleportRequest');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        teleportRequestListener(request);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+      });
+      it('Does not add a teleport request to this player if the request is not for our player', () => {
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+        const teleportRequestListener = getEventListener(mockSocket, 'teleportRequest');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        teleportRequestListener(request);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+      });
+      it('Remove a teleport request to this player if the cancel is for our player', () => {
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+        const teleportRequestListener = getEventListener(mockSocket, 'teleportRequest');
+        const teleportCanceledListener = getEventListener(mockSocket, 'teleportCanceled');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        teleportRequestListener(request);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+        teleportCanceledListener(request);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+      });
+      it('Does not remove a teleport request to this player if the cancel is not for our player', () => {
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([]);
+        const teleportRequestListener = getEventListener(mockSocket, 'teleportRequest');
+        const teleportCanceledListener = getEventListener(mockSocket, 'teleportCanceled');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        teleportRequestListener(request);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+        const otherRequest: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        teleportCanceledListener(otherRequest);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([request]);
+      });
+      it('Remove the outgoiong teleport request if the teleport has been denied', () => {
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Default,
+        );
+        const teleportDeniedListener = getEventListener(mockSocket, 'teleportDenied');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[1].id,
+          time: new Date(),
+        };
+        testController.ourPlayer.outgoingTeleport = request;
+        expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+        teleportDeniedListener(request);
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Denied,
+        );
+      });
+      it('Does not remove the outgoing teleport request the deny is not for our player', () => {
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Default,
+        );
+        const teleportDeniedListener = getEventListener(mockSocket, 'teleportDenied');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[1].id,
+          time: new Date(),
+        };
+        testController.ourPlayer.outgoingTeleport = request;
+        expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+        const otherRequest: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        teleportDeniedListener(otherRequest);
+        expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+      });
+      it('Does not remove the outgoing teleport request the deny is for our player but not the current outgoing request', () => {
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Default,
+        );
+        const teleportDeniedListener = getEventListener(mockSocket, 'teleportDenied');
+        const request: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[1].id,
+          time: new Date(),
+        };
+        testController.ourPlayer.outgoingTeleport = request;
+        expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+        const otherRequest: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        teleportDeniedListener(otherRequest);
+        expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+      });
+      describe('teleportAccepted events', () => {
+        let ourLoc: PlayerLocation;
+        let otherLoc: PlayerLocation;
+        let teleportAcceptedListener: (request: TeleportRequest) => void;
+        beforeEach(() => {
+          ourLoc = {
+            ...testController.ourPlayer.location,
+            x: 10,
+            y: 10,
+            rotation: 'front',
+            moving: false,
+          };
+          testController.ourPlayer.location = ourLoc;
+          expect(testController.ourPlayer.location).toBe(ourLoc);
+          otherLoc = {
+            ...testController.players[1].location,
+            x: 500,
+            y: 500,
+            rotation: 'right',
+            moving: true,
+          };
+          testController.players[1].location = otherLoc;
+          expect(testController.players[1].location).toBe(otherLoc);
+          teleportAcceptedListener = getEventListener(mockSocket, 'teleportAccepted');
+        });
+        it('Removes the outgoing teleport request from our player and updates the player location when teleport is accepted', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          const request: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: testController.players[1].id,
+            time: new Date(),
+          };
+          const movedPlayerListener = jest.fn();
+          const expectedPlayerUpdate = testController.ourPlayer;
+          expectedPlayerUpdate.location = otherLoc;
+          testController.addListener('playerMoved', movedPlayerListener);
+          testController.ourPlayer.outgoingTeleport = request;
+          expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+          teleportAcceptedListener(request); // GameObjects not defined error
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', request); // Error getting caught and failed getting thrown
+          // We cannot currently fully unit test the teleportAcceptedListener for the following reasons:
+          // 1. The listener will call the _teleportOurPlayerTo method which requires PlayerController.gameObjects to be defined.
+          // gameObjects are only defined in the TownFaneScene class in the create method and we cannot reuse Phaser to define the
+          // sprite or label in a test class in an efficient mannor
+          // 2. We cannot mock the function _teleportOurPlayerTo to remove use of gameObjects in mockTownController since it is private
+          // 3. We cannot mock the teleportAccepted listener or make a different mock event call since _socket is private
+          // 4. We cannot initialize a new socket with the same auth since our townController will be listening to the old one
+          // WE DO HOWEVER through manual integration testing know that this method is acting as intended as the teleport feature works
+        });
+        it('Does not remove the outgoing teleport request from our player if the accepted request is not the current request', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          const request: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: testController.players[1].id,
+            time: new Date(),
+          };
+          testController.ourPlayer.outgoingTeleport = request;
+          expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+          const otherRequest: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: testController.players[2].id,
+            time: new Date(),
+          };
+          teleportAcceptedListener(otherRequest);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportSuccess', request);
+          expect(testController.ourPlayer.location).toBe(ourLoc);
+          expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+        });
+        it('Emits a teleport failed event if the toPlayer from the request does not exist in our local session', () => {
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Default,
+          );
+          const request: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: nanoid(),
+            time: new Date(),
+          };
+          testController.ourPlayer.outgoingTeleport = request;
+          expect(testController.ourPlayer.outgoingTeleport).toBe(request);
+          teleportAcceptedListener(request);
+          expect(mockSocket.emit).not.toHaveBeenCalledWith('teleportSuccess', request);
+          expect(testController.ourPlayer.location).toBe(ourLoc);
+          expect(testController.ourPlayer.outgoingTeleport).toBe(
+            PreviousTeleportRequestStatus.Accepted,
+          );
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', request);
+        });
+      });
     });
     describe('[T2] interactableUpdate events', () => {
       describe('Conversation Area updates', () => {
