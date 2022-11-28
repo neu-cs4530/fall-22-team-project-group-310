@@ -578,6 +578,84 @@ describe('TownController', () => {
         );
         expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1]);
       });
+      describe('teleportSuccess events', () => {
+        let teleportSuccessListener: (request: TeleportRequest) => void;
+        const mockListeners = mock<TownEvents>();
+        beforeEach(() => {
+          teleportSuccessListener = getEventListener(mockSocket, 'teleportSuccess');
+          mockClear(mockListeners.teleportSuccess);
+          testController.addListener('teleportSuccess', mockListeners.teleportSuccess);
+        });
+        it('Remits a teleportSuccess event if the request is from our player', () => {
+          expect(mockListeners.teleportSuccess).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: testController.players[1].id,
+            time: new Date(),
+          };
+          teleportSuccessListener(request);
+          expect(mockListeners.teleportSuccess).toHaveBeenCalledWith(request);
+        });
+        it('Remits a teleportSuccess event if the request is to our player', () => {
+          expect(mockListeners.teleportSuccess).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.ourPlayer.id,
+            time: new Date(),
+          };
+          teleportSuccessListener(request);
+          expect(mockListeners.teleportSuccess).toHaveBeenCalledWith(request);
+        });
+        it('Does not remit a teleport success event if the request does not involve our player', () => {
+          expect(mockListeners.teleportSuccess).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.players[2].id,
+            time: new Date(),
+          };
+          teleportSuccessListener(request);
+          expect(mockListeners.teleportSuccess).not.toHaveBeenCalled();
+        });
+      });
+      describe('teleportFailed events', () => {
+        let teleportFailedListener: (request: TeleportRequest) => void;
+        const mockListeners = mock<TownEvents>();
+        beforeEach(() => {
+          teleportFailedListener = getEventListener(mockSocket, 'teleportFailed');
+          mockClear(mockListeners.teleportFailed);
+          testController.addListener('teleportFailed', mockListeners.teleportFailed);
+        });
+        it('Remits a teleportFailed event if the request is from our player', () => {
+          expect(mockListeners.teleportFailed).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.ourPlayer.id,
+            toPlayerId: testController.players[1].id,
+            time: new Date(),
+          };
+          teleportFailedListener(request);
+          expect(mockListeners.teleportFailed).toHaveBeenCalledWith(request);
+        });
+        it('Remits a teleportSuccess event if the request is to our player', () => {
+          expect(mockListeners.teleportFailed).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.ourPlayer.id,
+            time: new Date(),
+          };
+          teleportFailedListener(request);
+          expect(mockListeners.teleportFailed).toHaveBeenCalledWith(request);
+        });
+        it('Does not remit a teleport success event if the request does not involve our player', () => {
+          expect(mockListeners.teleportFailed).not.toHaveBeenCalled();
+          const request: TeleportRequest = {
+            fromPlayerId: testController.players[1].id,
+            toPlayerId: testController.players[2].id,
+            time: new Date(),
+          };
+          teleportFailedListener(request);
+          expect(mockListeners.teleportFailed).not.toHaveBeenCalled();
+        });
+      });
     });
     describe('[T2] interactableUpdate events', () => {
       describe('Conversation Area updates', () => {
