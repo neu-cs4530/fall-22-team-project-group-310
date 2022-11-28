@@ -12,6 +12,7 @@ import {
   ChatMessage,
   ConversationArea as ConversationAreaModel,
   CoveyTownSocket,
+  DoNotDisturbInfo,
   Player as PlayerModel,
   PlayerLocation,
   ServerToClientEvents,
@@ -300,6 +301,15 @@ describe('TownController', () => {
           expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', randomRequest);
         });
       });
+      describe('emitDoNotDisturbChange', () => {
+        it('Changes our players doNotDisturb state and emits a doNotDisturbChange when called', () => {
+          expect(testController.ourPlayer.doNotDisturb).toBe(false);
+          expect(mockSocket.emit).not.toHaveBeenCalled();
+          testController.emitDoNotDisturbChange();
+          expect(testController.ourPlayer.doNotDisturb).toBe(true);
+          expect(mockSocket.emit).toHaveBeenCalledWith('doNotDisturbChange', true);
+        });
+      });
     });
     describe('Teleport event socket listeners', () => {
       it('Adds a teleport request to this player if the request is for our player', () => {
@@ -505,6 +515,68 @@ describe('TownController', () => {
           );
           expect(mockSocket.emit).toHaveBeenCalledWith('teleportFailed', request);
         });
+      });
+      describe('doNotDisturbChange events', () => {
+        let doNotDisturbChangeListener: (playerInfo: DoNotDisturbInfo) => void;
+        beforeEach(() => {
+          doNotDisturbChangeListener = getEventListener(mockSocket, 'doNotDisturbChange');
+        });
+        it('Changes the state of a players doNotDisturb state given another player in the town', () => {
+          const expectedList = testController.players;
+          expectedList[1].doNotDisturb = true;
+          const playerInfo: DoNotDisturbInfo = {
+            playerId: testController.players[1].id,
+            state: true,
+          };
+          doNotDisturbChangeListener(playerInfo);
+          expect(testController.players).toStrictEqual(expectedList);
+        });
+        it('Does not change the state of our players doNotDisturb state', () => {
+          const expectedList = testController.players;
+          const playerInfo: DoNotDisturbInfo = {
+            playerId: testController.ourPlayer.id,
+            state: true,
+          };
+          doNotDisturbChangeListener(playerInfo);
+          expect(testController.players).toStrictEqual(expectedList);
+        });
+        it('Does not change the state of players if the player given does not exist in our town', () => {
+          const expectedList = testController.players;
+          const playerInfo: DoNotDisturbInfo = {
+            playerId: nanoid(),
+            state: true,
+          };
+          doNotDisturbChangeListener(playerInfo);
+          expect(testController.players).toStrictEqual(expectedList);
+        });
+      });
+      it('Removes all teleport events associated with another player when they disconnect', () => {
+        const outRequest: TeleportRequest = {
+          fromPlayerId: testController.ourPlayer.id,
+          toPlayerId: testController.players[2].id,
+          time: new Date(),
+        };
+        testController.ourPlayer.outgoingTeleport = outRequest;
+        const inRequest1: TeleportRequest = {
+          fromPlayerId: testController.players[1].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        testController.ourPlayer.addIncomingTeleport(inRequest1);
+        const inRequest2: TeleportRequest = {
+          fromPlayerId: testController.players[2].id,
+          toPlayerId: testController.ourPlayer.id,
+          time: new Date(),
+        };
+        testController.ourPlayer.addIncomingTeleport(inRequest2);
+        expect(testController.ourPlayer.outgoingTeleport).toBe(outRequest);
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1, inRequest2]);
+        const playerDisconnectListener = getEventListener(mockSocket, 'playerDisconnect');
+        playerDisconnectListener(testController.players[2].toPlayerModel());
+        expect(testController.ourPlayer.outgoingTeleport).toBe(
+          PreviousTeleportRequestStatus.Cancelled,
+        );
+        expect(testController.ourPlayer.incomingTeleports).toStrictEqual([inRequest1]);
       });
       describe('teleportSuccess events', () => {
         let teleportSuccessListener: (request: TeleportRequest) => void;
@@ -817,6 +889,7 @@ describe('TownController', () => {
         id: nanoid(),
         location: { moving: false, rotation: 'back', x: 0, y: 1, interactableID: nanoid() },
         userName: nanoid(),
+        doNotDisturbState: false,
       };
       //Add that player to the test town
       testPlayerPlayersChangedFn = emitEventAndExpectListenerFiring(

@@ -200,6 +200,14 @@ export default class Town {
       this._broadcastEmitter.emit('teleportFailed', request);
     });
 
+    /**
+     * Set up a listener to forward all doNotDisturbChange events to all clients in the town.
+     */
+    socket.on('doNotDisturbChange', (state: boolean) => {
+      newPlayer.doNotDisturbState = state;
+      this._broadcastEmitter.emit('doNotDisturbChange', { playerId: newPlayer.id, state });
+    });
+
     return newPlayer;
   }
 

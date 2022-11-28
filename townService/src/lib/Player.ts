@@ -23,6 +23,9 @@ export default class Player {
   /** A special town emitter that will emit events to the entire town BUT NOT to this player */
   public readonly townEmitter: TownEmitter;
 
+  /** The player's do not disturb state used for recieving teleport requests */
+  public doNotDisturbState: boolean;
+
   constructor(userName: string, townEmitter: TownEmitter) {
     this.location = {
       x: 0,
@@ -34,6 +37,7 @@ export default class Player {
     this._id = nanoid();
     this._sessionToken = nanoid();
     this.townEmitter = townEmitter;
+    this.doNotDisturbState = false;
   }
 
   get userName(): string {
@@ -61,6 +65,7 @@ export default class Player {
       id: this._id,
       location: this.location,
       userName: this._userName,
+      doNotDisturbState: this.doNotDisturbState,
     };
   }
 }

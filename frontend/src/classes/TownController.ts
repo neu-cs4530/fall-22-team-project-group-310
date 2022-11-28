@@ -100,17 +100,17 @@ export type TownEvents = {
   teleportRequest: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has cancled their request to teleport to a different player. This event
-   * is emitted when a player clicks the cancle teleport button.
+   * is emitted when a player clicks the cancel teleport button.
    */
   teleportCanceled: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has accepted a teleport request from a different player. This event is
-   * emitted when the player clicks the accept button on the toast popup.
+   * emitted when the player clicks the accept button on the teleport accept display.
    */
   teleportAccepted: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has denied a teleport request from a different player. This event is
-   * emitted when the player clicks the denied button on the toast popup, or when the player does not respond
+   * emitted when the player clicks the denied button on the teleport accept display, or when the player does not respond
    * within 30 seconds.
    */
   teleportDenied: (request: TeleportRequest) => void;
@@ -125,6 +125,11 @@ export type TownEvents = {
    * or find the location of the 'to' player.
    */
   teleportFailed: (request: TeleportRequest) => void;
+  /**
+   * An event that indicates that a player has toggled their do not disturb mode. This event is
+   * emitted when the player clicks the do not disturb button next to their name.
+   */
+  doNotDisturbChange: (state: boolean) => void;
 };
 
 /**
@@ -428,11 +433,27 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       this.emit('playerMoved', newPlayerObj);
     });
     /**
-     * When a player disconnects from the town, update local state
+     * When a player disconnects from the town, update local state, remove teleports associated with the player
      *
      * Note that setting the players array will also emit an event that the players in the town have changed.
      */
     this._socket.on('playerDisconnect', disconnectedPlayer => {
+      if (this._ourPlayer !== undefined) {
+        const inList = this.ourPlayer.incomingTeleports;
+        if (inList.length > 0) {
+          inList.forEach(request => {
+            if (request.fromPlayerId === disconnectedPlayer.id) {
+              this.emitTeleportDenied(request);
+            }
+          });
+        }
+        if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
+          const outRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+          if (outRequest.toPlayerId === disconnectedPlayer.id) {
+            this.emitTeleportCanceled(outRequest.toPlayerId);
+          }
+        }
+      }
       this._players = this.players.filter(eachPlayer => eachPlayer.id !== disconnectedPlayer.id);
     });
     /**
@@ -566,6 +587,19 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this.emit('teleportFailed', request);
       }
     });
+
+    /**
+     * When do not disturb mode is toggled, update our players do not disturb status
+     */
+    this._socket.on('doNotDisturbChange', playerInfo => {
+      this._players = this.players.map(player => {
+        if (playerInfo.playerId === player.id && playerInfo.playerId !== this.ourPlayer.id) {
+          player.doNotDisturb = playerInfo.state;
+          return player;
+        }
+        return player;
+      });
+    });
   }
 
   /**
@@ -651,6 +685,15 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a do not disturb change to the townService
+   * @param request the request being denied
+   */
+  public emitDoNotDisturbChange() {
+    this._socket.emit('doNotDisturbChange', !this.ourPlayer.doNotDisturb);
+    this.ourPlayer.doNotDisturb = !this.ourPlayer.doNotDisturb;
+  }
+
+  /**
    * Checks to see if a player with the given id is in the session
    * @param playerId the playerId to check
    * @returns boolean representing if the player is in the session
@@ -717,6 +760,19 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public disconnect() {
     this._socket.disconnect();
     this._loginController.setTownController(null);
+  }
+
+  /**
+   * When disconnecting from the town, clear all the teleports for our player. Decline all incoming
+   * and cancel the outgoing if needed.
+   */
+  private _clearTeleports(): void {
+    const inList = this.ourPlayer.incomingTeleports;
+    inList.forEach(request => this.emitTeleportDenied(request));
+    if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
+      const outRequest: TeleportRequest = this.ourPlayer.outgoingTeleport as TeleportRequest;
+      this.emitTeleportCanceled(outRequest.toPlayerId);
+    }
   }
 
   /**

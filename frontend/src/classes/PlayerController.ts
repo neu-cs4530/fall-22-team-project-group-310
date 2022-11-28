@@ -8,6 +8,7 @@ export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
   outgoingTeleportChange: (newRequest: TeleportRequest | PreviousTeleportRequestStatus) => void;
   incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
+  doNotDisturbChange: (newValue: boolean) => void;
 };
 
 export type PlayerGameObjects = {
@@ -29,11 +30,14 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   private _outgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus =
     PreviousTeleportRequestStatus.Default;
 
-  constructor(id: string, userName: string, location: PlayerLocation) {
+  private _doNotDisturb: boolean;
+
+  constructor(id: string, userName: string, location: PlayerLocation, doNotDisturbState = false) {
     super();
     this._id = id;
     this._userName = userName;
     this._location = location;
+    this._doNotDisturb = doNotDisturbState;
   }
 
   set location(newLocation: PlayerLocation) {
@@ -69,6 +73,18 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
     return this._incomingTeleports;
   }
 
+  set doNotDisturb(newValue: boolean) {
+    // check if valid toggle before emitting
+    if (newValue !== this._doNotDisturb) {
+      this._doNotDisturb = newValue;
+      this.emit('doNotDisturbChange', newValue);
+    }
+  }
+
+  get doNotDisturb() {
+    return this._doNotDisturb;
+  }
+
   public addIncomingTeleport(request: TeleportRequest): void {
     if (!this._incomingTeleports.find(teleport => _.isEqual(teleport, request))) {
       this._incomingTeleports.push(request);
@@ -86,7 +102,12 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   toPlayerModel(): PlayerModel {
-    return { id: this.id, userName: this.userName, location: this.location };
+    return {
+      id: this.id,
+      userName: this.userName,
+      location: this.location,
+      doNotDisturbState: this.doNotDisturb,
+    };
   }
 
   private _updateGameComponentLocation() {
@@ -107,6 +128,11 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
   }
 
   static fromPlayerModel(modelPlayer: PlayerModel): PlayerController {
-    return new PlayerController(modelPlayer.id, modelPlayer.userName, modelPlayer.location);
+    return new PlayerController(
+      modelPlayer.id,
+      modelPlayer.userName,
+      modelPlayer.location,
+      modelPlayer.doNotDisturbState,
+    );
   }
 }

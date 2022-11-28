@@ -1,4 +1,15 @@
-import { Box, Button, Heading, ListItem, OrderedList, Tooltip, useToast } from '@chakra-ui/react';
+import {
+  Button,
+  Heading,
+  ListItem,
+  OrderedList,
+  StackDivider,
+  Switch,
+  Tooltip,
+  useToast,
+  VStack,
+} from '@chakra-ui/react';
+import Block from '@material-ui/icons/Block';
 import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
@@ -19,13 +30,14 @@ export default function PlayersInTownList(): JSX.Element {
   const players = usePlayers();
   const townController = useTownController();
   const { friendlyName, townID, ourPlayer } = townController;
-  const sortedPlayers = players.concat([]);
+  const sortedPlayers = players.filter(p => p.id !== ourPlayer.id);
   sortedPlayers.sort((p1, p2) =>
     p1.userName.localeCompare(p2.userName, undefined, { numeric: true, sensitivity: 'base' }),
   );
   const [outgoingTeleport, setOutgoingTeleport] = useState<
     TeleportRequest | PreviousTeleportRequestStatus
   >(ourPlayer.outgoingTeleport);
+  const [doNotDisturb, setDoNotDisturb] = useState<boolean>(ourPlayer.doNotDisturb);
   const toast = useToast();
 
   useEffect(() => {
@@ -52,8 +64,11 @@ export default function PlayersInTownList(): JSX.Element {
     };
 
     ourPlayer.addListener('outgoingTeleportChange', updateOutgoingTeleport);
+    ourPlayer.addListener('doNotDisturbChange', setDoNotDisturb);
+
     return () => {
       ourPlayer.removeListener('outgoingTeleportChange', updateOutgoingTeleport);
+      ourPlayer.removeListener('doNotDisturbChange', setDoNotDisturb);
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
 
@@ -128,13 +143,15 @@ export default function PlayersInTownList(): JSX.Element {
             onClick={() => {
               townController.emitTeleportRequest(player.id);
             }}
-            leftIcon={<MyLocation fontSize='small' />}
+            leftIcon={
+              player.doNotDisturb ? <Block fontSize='small' /> : <MyLocation fontSize='small' />
+            }
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={typeof outgoingTeleport !== 'string'}
+            disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}
             data-testid='teleportRequestButton'>
-            Teleport
+            {player.doNotDisturb ? 'Do Not Disturb' : 'Teleport Request'}
           </Button>
         );
       }
@@ -142,20 +159,48 @@ export default function PlayersInTownList(): JSX.Element {
   };
 
   return (
-    <Box>
+    <VStack align={'left'} divider={<StackDivider borderColor='gray.200' />}>
       <Tooltip label={`Town ID: ${townID}`}>
         <Heading as='h2' fontSize='l'>
           Current town: {friendlyName}
         </Heading>
       </Tooltip>
       <OrderedList>
-        {sortedPlayers.map(player => (
-          <ListItem key={player.id}>
-            <PlayerName player={player} />
-            {renderButtons(player)}
-          </ListItem>
-        ))}
+        <ListItem>
+          <div style={{ width: '100%' }}>
+            <PlayerName player={ourPlayer}></PlayerName> {' (me) '}
+          </div>
+          <Switch
+            colorScheme='blue'
+            onChange={() => {
+              townController.emitDoNotDisturbChange();
+              if (typeof ourPlayer.outgoingTeleport !== 'string') {
+                townController.emitTeleportCanceled(ourPlayer.outgoingTeleport.toPlayerId);
+              }
+              ourPlayer.incomingTeleports.map(request => {
+                townController.emitTeleportDenied(request);
+              });
+            }}
+            marginRight={'2'}
+            data-testid='doNotDisturbButton'
+          />
+          {`Do Not Disturb ${ourPlayer.doNotDisturb ? 'On' : 'Off'}`}
+        </ListItem>
       </OrderedList>
-    </Box>
+      {sortedPlayers.length > 0 && (
+        <OrderedList>
+          {sortedPlayers.map(player => {
+            if (player.id !== ourPlayer.id) {
+              return (
+                <ListItem key={player.id}>
+                  <PlayerName player={player} />
+                  {renderButtons(player)}
+                </ListItem>
+              );
+            }
+          })}
+        </OrderedList>
+      )}
+    </VStack>
   );
 }
