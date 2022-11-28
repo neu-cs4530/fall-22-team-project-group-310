@@ -57,6 +57,55 @@ export default function PlayersInTownList(): JSX.Element {
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
 
+  useEffect(() => {
+    const successToast = (request: TeleportRequest) => {
+      toast({
+        title: `
+       ${
+         request.fromPlayerId === ourPlayer.id
+           ? 'You'
+           : players.find((player: PlayerController) => player.id === request.fromPlayerId)
+               ?.userName
+       } 
+           successfully teleported to 
+          ${
+            request.toPlayerId === ourPlayer.id
+              ? 'you'
+              : players.find((player: PlayerController) => player.id === request.toPlayerId)
+                  ?.userName
+          }`,
+        status: 'success',
+      });
+    };
+
+    const failedToast = (request: TeleportRequest) => {
+      toast({
+        title: `
+       ${
+         request.fromPlayerId === ourPlayer.id
+           ? 'You'
+           : players.find((player: PlayerController) => player.id === request.fromPlayerId)
+               ?.userName
+       } 
+           failed to teleport to 
+          ${
+            request.toPlayerId === ourPlayer.id
+              ? 'you'
+              : players.find((player: PlayerController) => player.id === request.toPlayerId)
+                  ?.userName
+          }`,
+        status: 'error',
+      });
+    };
+
+    townController.addListener('teleportSuccess', successToast);
+    townController.addListener('teleportFailed', failedToast);
+    return () => {
+      townController.removeListener('teleportSuccess', successToast);
+      townController.removeListener('teleportFailed', failedToast);
+    };
+  }, [townController, toast, players, ourPlayer.id]);
+
   const renderButtons = (player: PlayerController) => {
     if (player.id !== ourPlayer.id) {
       if (typeof outgoingTeleport !== 'string' && outgoingTeleport.toPlayerId === player.id) {
@@ -68,7 +117,8 @@ export default function PlayersInTownList(): JSX.Element {
             leftIcon={<Cancel fontSize='small' />}
             size='xs'
             colorScheme={'red'}
-            margin='1.5'>
+            margin='1.5'
+            data-testid='teleportCancelButton'>
             Cancel
           </Button>
         );
@@ -82,7 +132,8 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={typeof outgoingTeleport !== 'string'}>
+            disabled={typeof outgoingTeleport !== 'string'}
+            data-testid='teleportRequestButton'>
             Teleport
           </Button>
         );
