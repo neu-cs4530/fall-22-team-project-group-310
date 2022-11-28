@@ -50,6 +50,7 @@ export default function TeleportRequestNotification({
       <Button
         marginRight='10px'
         colorScheme='green'
+        size='sm'
         leftIcon={<Check fontSize='small' />}
         onClick={() => townController.emitTeleportAccepted(teleportRequest)}
         data-testId='teleportAcceptButton'>
@@ -58,15 +59,18 @@ export default function TeleportRequestNotification({
       <Button
         marginRight='10px'
         colorScheme='red'
+        size='sm'
         leftIcon={<Block fontSize='small' />}
         onClick={() => townController.emitTeleportDenied(teleportRequest)}
         data-testId='teleportDenyButton'>
         Deny
       </Button>
-      {'Time-Out In: '}
-      <Badge size='md' data-testid='timerDisplay'>
-        {incomingTeleportTimer}
-      </Badge>
+      <div style={{ width: '100%' }}>
+        {'Time-Out In: '}
+        <Badge size='md' data-testid='timerDisplay'>
+          {incomingTeleportTimer}
+        </Badge>
+      </div>
     </Box>
   );
 }
