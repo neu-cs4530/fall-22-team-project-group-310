@@ -14,7 +14,6 @@ import {
 import {
   ChatMessage,
   Interactable,
-  OutgoingTeleportTimerInfo,
   PlayerLocation,
   TeleportRequest,
   TownEmitter,
