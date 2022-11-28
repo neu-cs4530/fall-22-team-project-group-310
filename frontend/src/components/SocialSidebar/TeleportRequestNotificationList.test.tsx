@@ -1,8 +1,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
-import { act, fireEvent, render, RenderResult, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, RenderResult } from '@testing-library/react';
 import { nanoid } from 'nanoid';
 import React from 'react';
 import PlayerController, { PlayerEvents } from '../../classes/PlayerController';
@@ -11,7 +10,6 @@ import * as useTownController from '../../hooks/useTownController';
 import { mockTownController } from '../../TestUtils';
 import { PlayerLocation, TeleportRequest } from '../../types/CoveyTownSocket';
 import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
-import * as PlayerName from './PlayerName';
 import TeleportRequestNotificationsList from './TeleportRequestNotificationsList';
 
 describe('TeleportRequestNotificationsList', () => {
@@ -38,6 +36,8 @@ describe('TeleportRequestNotificationsList', () => {
     | [event: keyof PlayerEvents, newLocation: PlayerLocation]
     | [event: keyof PlayerEvents, newRequest: TeleportRequest | PreviousTeleportRequestStatus]
     | [event: keyof PlayerEvents, newIncomingList: TeleportRequest[]]
+    | [event: keyof PlayerEvents, newValue: boolean]
+    | [event: keyof PlayerEvents, newValue: number | undefined]
   >;
   let mockedTownController: TownController;
   let players: PlayerController[] = [];
@@ -65,6 +65,15 @@ describe('TeleportRequestNotificationsList', () => {
         expect(parentComponent.nodeName).toBe('OL'); // list items expected to be directly nested in an ordered list
       }
     }
+
+    const denyButtons = await renderData.findAllByTestId('teleportDenyButton');
+    expect(denyButtons.length).toBe(teleportsToExpect.length);
+
+    const acceptButtons = await renderData.findAllByTestId('teleportAcceptButton');
+    expect(acceptButtons.length).toBe(teleportsToExpect.length);
+
+    const timers = await renderData.findAllByTestId('timerDisplay');
+    expect(timers.length).toBe(teleportsToExpect.length);
   };
   beforeAll(() => {
     // Spy on console.error and intercept react key warnings to fail test
