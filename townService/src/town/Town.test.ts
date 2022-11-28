@@ -14,6 +14,7 @@ import {
 import {
   ChatMessage,
   Interactable,
+  OutgoingTeleportTimerInfo,
   PlayerLocation,
   TeleportRequest,
   TownEmitter,
@@ -627,6 +628,15 @@ describe('Town', () => {
       expect(emittedTeleportDenied).toEqual(teleportRequest);
       expect(() => getLastEmittedEvent(townEmitter, 'teleportDenied', 1)).toThrowError();
     });
+    it('Forwards teleportTimeout to all players in the same town', async () => {
+      const teleportTimeoutHandler = getEventListener(playerTestData.socket, 'teleportTimeout');
+      expect(() => getLastEmittedEvent(townEmitter, 'teleportTimeout')).toThrowError();
+      teleportTimeoutHandler(teleportRequest);
+
+      const emittedTeleportTimeout = getLastEmittedEvent(townEmitter, 'teleportTimeout');
+      expect(emittedTeleportTimeout).toEqual(teleportRequest);
+      expect(() => getLastEmittedEvent(townEmitter, 'teleportTimeout', 1)).toThrowError();
+    });
     it('Forwards teleportSuccess to all players in the same town', async () => {
       const teleportSuccessHandler = getEventListener(playerTestData.socket, 'teleportSuccess');
       expect(() => getLastEmittedEvent(townEmitter, 'teleportSuccess')).toThrowError();
@@ -652,6 +662,23 @@ describe('Town', () => {
       const emittedDoNotDisturbChange = getLastEmittedEvent(townEmitter, 'doNotDisturbChange');
       expect(emittedDoNotDisturbChange).toEqual({ playerId: player.id, state: true });
       expect(() => getLastEmittedEvent(townEmitter, 'doNotDisturbChange', 1)).toThrowError();
+    });
+    it('Forwards doNotDisturbChange to all players in the same town and updates the players state', async () => {
+      const outgoingTeleportTimerHandler = getEventListener(
+        playerTestData.socket,
+        'outgoingTeleportTimerChange',
+      );
+      expect(() => getLastEmittedEvent(townEmitter, 'outgoingTeleportTimerChange')).toThrowError();
+      outgoingTeleportTimerHandler(21);
+      const emittedOutgoingTeleportTimerChange = getLastEmittedEvent(
+        townEmitter,
+        'outgoingTeleportTimerChange',
+      );
+      expect(emittedOutgoingTeleportTimerChange).toEqual({ playerId: player.id, state: 21 });
+      expect(() =>
+        getLastEmittedEvent(townEmitter, 'outgoingTeleportTimerChange', 1),
+      ).toThrowError();
+      expect(player.outgoingTeleportTimerState).toBe(21);
     });
   });
   describe('addConversationArea', () => {

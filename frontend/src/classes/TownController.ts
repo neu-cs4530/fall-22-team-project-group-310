@@ -719,8 +719,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
-   * Emit a teleport denied to the townService if the request is in our player's incomingTeleportsList
-   * @param request the request being denied
+   * Emit a teleport timeout to the townService if our player's outgoing request times out
    */
   public emitTeleportTimeout() {
     if (typeof this.ourPlayer.outgoingTeleport !== 'string') {
