@@ -64,7 +64,9 @@ export default function TeleportRequestNotification({
         Deny
       </Button>
       {'Time-Out In: '}
-      <Badge size='md'>{incomingTeleportTimer}</Badge>
+      <Badge size='md' data-testid='timerDisplay'>
+        {incomingTeleportTimer}
+      </Badge>
     </Box>
   );
 }

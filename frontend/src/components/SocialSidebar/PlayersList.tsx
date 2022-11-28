@@ -123,10 +123,13 @@ export default function PlayersInTownList(): JSX.Element {
               leftIcon={<Cancel fontSize='small' />}
               size='xs'
               colorScheme={'red'}
-              margin='1.5'>
+              margin='1.5'
+              data-testid='teleportCancelButton'>
               {`Cancel Request`}
             </Button>
-            <Badge marginRight={'2'}>{outgoingTeleportTimer}</Badge>
+            <Badge marginRight={'2'} data-testid='timerDisplay'>
+              {outgoingTeleportTimer}
+            </Badge>
           </>
         );
       } else {
@@ -142,7 +145,8 @@ export default function PlayersInTownList(): JSX.Element {
             size='xs'
             colorScheme={'blue'}
             margin='1.5'
-            disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}>
+            disabled={typeof outgoingTeleport !== 'string' || doNotDisturb || player.doNotDisturb}
+            data-testid='teleportRequestButton'>
             {player.doNotDisturb ? 'Do Not Disturb' : 'Teleport Request'}
           </Button>
         );

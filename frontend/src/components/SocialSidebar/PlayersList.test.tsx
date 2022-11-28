@@ -267,4 +267,37 @@ describe('PlayersInTownList', () => {
       expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalledTimes(1);
     });
   });
+  describe('Timer', () => {
+    it('starts the timer when ourPlayer makes a teleport request', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+
+      act(() => {
+        fireEvent.click(teleportRequestButtons[0]);
+      });
+
+      expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
+      expect(mockedTownController.startOutgoingTeleportTimer).toHaveBeenCalled();
+    });
+    it('displays the timer when ourPlayer makes a teleport request', async () => {
+      mockedTownController.ourPlayer.outgoingTeleport = {
+        fromPlayerId: players[0].id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
+
+      mockedTownController.ourPlayer.outgoingTeleportTimer = 30;
+
+      const renderData = renderPlayersList();
+
+      const teleportCancelButtons = await renderData.getAllByTestId('teleportCancelButton');
+      expect(teleportCancelButtons.length).toBe(1);
+
+      const teleportTimer = await renderData.getAllByTestId('timerDisplay');
+      expect(teleportTimer.length).toBe(1);
+    });
+  });
 });
