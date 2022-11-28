@@ -95,51 +95,20 @@ export type TownEvents = {
    */
   interact: <T extends Interactable>(typeName: T['name'], obj: T) => void;
   /**
-   * An event that indicates that a player has requested to teleport to a different player.  This event is emitted
-   * when a player clicks the teleport request button.
-   */
-  teleportRequest: (request: TeleportRequest) => void;
-  /**
-   * An event that indicates that a player has cancled their request to teleport to a different player. This event
-   * is emitted when a player clicks the cancel teleport button.
-   */
-  teleportCanceled: (request: TeleportRequest) => void;
-  /**
-   * An event that indicates that a player has accepted a teleport request from a different player. This event is
-   * emitted when the player clicks the accept button on the teleport accept display.
-   */
-  teleportAccepted: (request: TeleportRequest) => void;
-  /**
-   * An event that indicates that a player has denied a teleport request from a different player. This event is
-   * emitted when the player clicks the denied button on the teleport accept display.
-   */
-  teleportDenied: (request: TeleportRequest) => void;
-  /**
    * An event that indicates that a player's teleport request has timed out. This event is
    * emitted when the requested player does not respond within 30 seconds.
    */
   teleportTimeout: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has successfully teleported to another player. This event is
-   * emitted in the teleportAccepted listener if the 'from' player teleported to the 'to' player.
+   * emitted if the sucessful teleport is relevant to ourPlayer.
    */
   teleportSuccess: (request: TeleportRequest) => void;
   /**
    * An event that indicates that a player has failed to teleport to another player. This event is
-   * emitted in the teleportAccepted listener if the 'from' player for some reason could not teleport to
-   * or find the location of the 'to' player.
+   * emitted if the failed teleport is relevant to ourPlayer.
    */
   teleportFailed: (request: TeleportRequest) => void;
-  /**
-   * An event that indicates that a player has toggled their do not disturb mode. This event is
-   * emitted when the player clicks the do not disturb button next to their name.
-   */
-  doNotDisturbChange: (state: boolean) => void;
-  /**
-   * An event that indicates that a player's outgoing teleport timer has changed. This event is
-   * emitted when the method handling timer incrementing runs.
-   */
-  outgoingTeleportTimerChange: (state: number | undefined) => void;
   /**
    * An event that indicates that another player's outgoing teleport timer has changed. This event is
    * emitted when the timer of a relevant incoming teleport is changed.
