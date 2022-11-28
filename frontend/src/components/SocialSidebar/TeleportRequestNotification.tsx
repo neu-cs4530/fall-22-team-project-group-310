@@ -51,16 +51,16 @@ export default function TeleportRequestNotification({
         marginRight='10px'
         colorScheme='green'
         leftIcon={<Check fontSize='small' />}
-        size='sm'
-        onClick={() => townController.emitTeleportAccepted(teleportRequest)}>
+        onClick={() => townController.emitTeleportAccepted(teleportRequest)}
+        data-testId='teleportAcceptButton'>
         Accept
       </Button>
       <Button
         marginRight='10px'
         colorScheme='red'
         leftIcon={<Block fontSize='small' />}
-        size='sm'
-        onClick={() => townController.emitTeleportDenied(teleportRequest)}>
+        onClick={() => townController.emitTeleportDenied(teleportRequest)}
+        data-testId='teleportDenyButton'>
         Deny
       </Button>
       {'Time-Out In: '}
