@@ -140,7 +140,7 @@ describe('PlayersInTownList', () => {
       );
     }
 
-    return (addedListeners[0][1] as unknown) as TownEvents[Ev];
+    return addedListeners[0][1] as unknown as TownEvents[Ev];
   }
 
   /**
@@ -164,7 +164,7 @@ describe('PlayersInTownList', () => {
       );
     }
 
-    return (removedListeners[0][1] as unknown) as TownEvents[Ev];
+    return removedListeners[0][1] as unknown as TownEvents[Ev];
   }
   describe('Heading', () => {
     it('Displays a heading "Current town: townName', async () => {
@@ -361,10 +361,16 @@ describe('PlayersInTownList', () => {
 
       await expectProperlyRenderedPlayersList(renderData, players);
 
-      const teleportRequestButtons = await renderData.getAllByTestId('teleportCancelButton');
-      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
-      expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
+      const teleportCancelButtons = await renderData.getAllByTestId('teleportCancelButton');
+      expect(teleportCancelButtons.length).toEqual(1);
+
+      act(() => {
+        fireEvent.click(teleportCancelButtons[0]);
+      });
+
+      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalled();
     });
+
     it('displays a teleport cancel button and disables other teleport buttons when outgoing teleport is pending', async () => {
       const renderData = renderPlayersList();
       await expectProperlyRenderedPlayersList(renderData, players);
