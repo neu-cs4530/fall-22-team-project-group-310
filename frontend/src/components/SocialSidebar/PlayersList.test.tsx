@@ -263,18 +263,17 @@ describe('PlayersInTownList', () => {
     expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
   });
   it('emits teleport cancel event when clicked and is cancel button', async () => {
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
-
-    const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
-
     mockedTownController.ourPlayer.outgoingTeleport = {
       fromPlayerId: players[0].id,
       toPlayerId: players[1].id,
       time: new Date(),
     };
-    renderData.rerender(wrappedPlayersListComponent());
+
+    const renderData = renderPlayersList();
+    await expectProperlyRenderedPlayersList(renderData, players);
+
+    const teleportRequestButtons = await renderData.getAllByTestId('teleportCancelButton');
+    expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
 
     act(() => {
       fireEvent.click(teleportRequestButtons[0]);
