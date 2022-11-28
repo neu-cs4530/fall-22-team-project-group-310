@@ -26,7 +26,7 @@ export default function TeleportRequestNotificationsList(): JSX.Element {
     <Box>
       <Tooltip label={'Incoming Teleport Requests'}>
         <Heading as='h2' fontSize='l'>
-          Incoming Teleport Requests
+          Incoming Teleport Requests:
         </Heading>
       </Tooltip>
       {incomingTeleports.length > 0 ? (

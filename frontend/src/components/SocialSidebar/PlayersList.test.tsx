@@ -240,27 +240,94 @@ describe('PlayersInTownList', () => {
       await expectProperlyRenderedPlayersList(renderData, newPlayers);
     }
   });
-  it('displays a teleport request button next to each player in the town on first load', async () => {
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
-
-    const listEntries = await renderData.findAllByRole('listitem');
-    const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-
-    expect(teleportRequestButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
-  });
-  it('emits teleport request event when clicked', async () => {
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
-
-    const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
-
-    act(() => {
-      fireEvent.click(teleportRequestButtons[0]);
+  describe('Do not disturb button', () => {
+    it('displays one do not disturb switch for our player in the town on first load', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
+      expect(doNotDisturbButton.length).toEqual(1);
     });
+    it('emits an event to change do not disturb state when switch is toggled', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
+      expect(doNotDisturbButton.length).toEqual(1);
+      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
 
-    expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
+      expect(ourPlayer.doNotDisturb).toEqual(false);
+      act(() => {
+        fireEvent.click(doNotDisturbButtonRole);
+      });
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
+    });
+    it('does not emit any teleport cancel or denied events when do not disturb switch is toggled and there are no incoming/outgoing teleports', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
+      expect(doNotDisturbButton.length).toEqual(1);
+      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
+
+      expect(ourPlayer.doNotDisturb).toEqual(false);
+      act(() => {
+        fireEvent.click(doNotDisturbButtonRole);
+      });
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
+      expect(mockedTownController.emitTeleportCanceled).not.toHaveBeenCalled();
+      expect(mockedTownController.emitTeleportDenied).not.toHaveBeenCalled();
+    });
+    it('emits an event to deny incoming teleports when do not disturb switch is toggled and there are incoming teleports', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
+
+      const teleport0: TeleportRequest = {
+        fromPlayerId: players[1].id,
+        toPlayerId: players[0].id,
+        time: new Date(),
+      };
+      const teleport1: TeleportRequest = {
+        fromPlayerId: players[2].id,
+        toPlayerId: players[0].id,
+        time: new Date(),
+      };
+      ourPlayer.addIncomingTeleport(teleport0);
+      ourPlayer.addIncomingTeleport(teleport1);
+
+      expect(ourPlayer.doNotDisturb).toEqual(false);
+      act(() => {
+        fireEvent.click(doNotDisturbButtonRole);
+      });
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
+      expect(mockedTownController.emitTeleportCanceled).not.toHaveBeenCalled();
+      expect(mockedTownController.emitTeleportDenied).toHaveBeenCalled();
+      expect(mockedTownController.emitTeleportDenied).toHaveBeenCalledTimes(2);
+    });
+    it('emits an event to cancel the outgoing teleports when do not disturb switch is toggled', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
+
+      const teleport0: TeleportRequest = {
+        fromPlayerId: players[0].id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
+
+      ourPlayer.outgoingTeleport = teleport0;
+
+      act(() => {
+        fireEvent.click(doNotDisturbButtonRole);
+      });
+
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
+      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
+      expect(mockedTownController.emitTeleportDenied).not.toHaveBeenCalled();
+      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalled();
+      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalledTimes(1);
+    });
   });
   it('emits teleport cancel event when clicked and is cancel button', async () => {
     mockedTownController.ourPlayer.outgoingTeleport = {
@@ -275,68 +342,110 @@ describe('PlayersInTownList', () => {
     const teleportRequestButtons = await renderData.getAllByTestId('teleportCancelButton');
     expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
 
-    act(() => {
-      fireEvent.click(teleportRequestButtons[0]);
+      expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
     });
+    it('displays a teleport cancel button and disables other teleport buttons when outgoing teleport is pending', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
 
-    expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalled();
-  });
-  it('displays a teleport cancel button and disables other teleport buttons when outgoing teleport is pending', async () => {
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
+      const listEntries = await renderData.findAllByRole('listitem');
+      let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
 
-    const listEntries = await renderData.findAllByRole('listitem');
-    let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
+      mockedTownController.ourPlayer.outgoingTeleport = {
+        fromPlayerId: players[0].id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
+      renderData.rerender(wrappedPlayersListComponent());
 
-    mockedTownController.ourPlayer.outgoingTeleport = {
-      fromPlayerId: players[0].id,
-      toPlayerId: players[1].id,
-      time: new Date(),
-    };
-    renderData.rerender(wrappedPlayersListComponent());
+      // check for cancel button
+      const teleportCancelButtons = await renderData.getAllByTestId('teleportCancelButton');
+      expect(teleportCancelButtons.length).toEqual(1);
 
-    // check for cancel button
-    const teleportCancelButtons = await renderData.getAllByTestId('teleportCancelButton');
-    expect(teleportCancelButtons.length).toEqual(1);
+      // check for disabled teleport request buttons
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
+      }
+    });
+    it('displays all teleport buttons when outgoing teleport changes to PreviousTeleportRequestStatus', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
 
-    // check for disabled teleport request buttons
-    teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    for (let i = 0; i < teleportRequestButtons.length; i += 1) {
-      expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
-    }
-  });
-  it('displays all teleport buttons when outgoing teleport changes to PreviousTeleportRequestStatus', async () => {
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
+      let listEntries = await renderData.findAllByRole('listitem');
+      let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
 
-    let listEntries = await renderData.findAllByRole('listitem');
-    let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
+      mockedTownController.ourPlayer.outgoingTeleport = {
+        fromPlayerId: ourPlayer.id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
 
-    mockedTownController.ourPlayer.outgoingTeleport = {
-      fromPlayerId: ourPlayer.id,
-      toPlayerId: players[1].id,
-      time: new Date(),
-    };
+      mockedTownController.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Default;
+      renderData.rerender(wrappedPlayersListComponent());
 
-    mockedTownController.ourPlayer.outgoingTeleport = PreviousTeleportRequestStatus.Default;
-    renderData.rerender(wrappedPlayersListComponent());
+      // check for right number of teleport buttons
+      listEntries = await renderData.findAllByRole('listitem');
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
 
-    // check for right number of teleport buttons
-    listEntries = await renderData.findAllByRole('listitem');
-    teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    expect(teleportRequestButtons.length).toEqual(listEntries.length - 1);
+      // check for cancel button
+      const teleportCancelButtons = await renderData.queryAllByTestId('teleportCancelButton');
+      expect(teleportCancelButtons.length).toEqual(0);
 
-    // check for cancel button
-    const teleportCancelButtons = await renderData.queryAllByTestId('teleportCancelButton');
-    expect(teleportCancelButtons.length).toEqual(0);
+      // check for disabled teleport request buttons
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
+      }
+    });
+    it('disables all teleport request buttons when do not disturb is true', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
 
-    // check for disabled teleport request buttons
-    teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
-    for (let i = 0; i < teleportRequestButtons.length; i += 1) {
-      expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
-    }
+      let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
+      }
+
+      mockedTownController.ourPlayer.doNotDisturb = true;
+      renderData.rerender(wrappedPlayersListComponent());
+
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
+      }
+    });
+    it('disables teleport request button for a player when they are in do not disturb mode', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      let teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
+      }
+
+      const dndPlayerId = players[1].id;
+      players = players.map(p => {
+        if (p.id === dndPlayerId) {
+          p.doNotDisturb = true;
+        }
+        return p;
+      });
+      usePlayersSpy.mockReturnValue(players);
+      renderData.rerender(wrappedPlayersListComponent());
+
+      teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      for (let i = 0; i < teleportRequestButtons.length; i += 1) {
+        if (i === 0) {
+          expect(teleportRequestButtons[i]).toHaveAttribute('disabled');
+        } else {
+          expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
+        }
+      }
+    });
   });
   describe('Do not disturb button', () => {
     it('displays one do not disturb switch for our player in the town on first load', async () => {
