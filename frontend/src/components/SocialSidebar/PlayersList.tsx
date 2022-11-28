@@ -45,25 +45,6 @@ export default function PlayersInTownList(): JSX.Element {
   const toast = useToast();
 
   useEffect(() => {
-    const timeoutToast = (timedoutRequest: TeleportRequest) => {
-      toast({
-        title:
-          'The teleport request from ' +
-          players.find((player: PlayerController) => player.id === timedoutRequest.fromPlayerId)
-            ?.userName +
-          ' timed out.',
-        status: 'info',
-      });
-    };
-
-    townController.addListener('teleportTimeout', timeoutToast);
-
-    return () => {
-      townController.addListener('teleportTimeout', timeoutToast);
-    };
-  }, [players, toast, townController]);
-
-  useEffect(() => {
     const updateOutgoingTeleport = (
       newOutgoingTeleport: TeleportRequest | PreviousTeleportRequestStatus,
     ) => {
@@ -110,6 +91,68 @@ export default function PlayersInTownList(): JSX.Element {
       ourPlayer.addListener('outgoingTeleportTimerChange', setOutgoingTeleportTimer);
     };
   }, [ourPlayer, outgoingTeleport, toast, players]);
+
+  useEffect(() => {
+    const successToast = (request: TeleportRequest) => {
+      toast({
+        title: `
+       ${
+         request.fromPlayerId === ourPlayer.id
+           ? 'You'
+           : players.find((player: PlayerController) => player.id === request.fromPlayerId)
+               ?.userName
+       } 
+           successfully teleported to 
+          ${
+            request.toPlayerId === ourPlayer.id
+              ? 'you'
+              : players.find((player: PlayerController) => player.id === request.toPlayerId)
+                  ?.userName
+          }`,
+        status: 'success',
+      });
+    };
+
+    const failedToast = (request: TeleportRequest) => {
+      toast({
+        title: `
+       ${
+         request.fromPlayerId === ourPlayer.id
+           ? 'You'
+           : players.find((player: PlayerController) => player.id === request.fromPlayerId)
+               ?.userName
+       } 
+           failed to teleport to 
+          ${
+            request.toPlayerId === ourPlayer.id
+              ? 'you'
+              : players.find((player: PlayerController) => player.id === request.toPlayerId)
+                  ?.userName
+          }`,
+        status: 'error',
+      });
+    };
+
+    const timeoutToast = (timedoutRequest: TeleportRequest) => {
+      toast({
+        title:
+          'The teleport request from ' +
+          players.find((player: PlayerController) => player.id === timedoutRequest.fromPlayerId)
+            ?.userName +
+          ' timed out.',
+        status: 'info',
+      });
+    };
+
+    townController.addListener('teleportSuccess', successToast);
+    townController.addListener('teleportFailed', failedToast);
+    townController.addListener('teleportTimeout', timeoutToast);
+    return () => {
+      townController.removeListener('teleportSuccess', successToast);
+      townController.removeListener('teleportFailed', failedToast);
+      townController.addListener('teleportTimeout', timeoutToast);
+    };
+  }, [townController, toast, players, ourPlayer.id]);
 
   const renderButtons = (player: PlayerController) => {
     if (player.id !== ourPlayer.id) {
