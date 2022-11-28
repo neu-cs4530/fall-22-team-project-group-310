@@ -9,21 +9,11 @@ import PlayerController from '../../classes/PlayerController';
 import * as TownControllerHooks from '../../classes/TownController';
 import TownController, { TownEvents } from '../../classes/TownController';
 import * as useTownController from '../../hooks/useTownController';
-import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
 import { EventNames, mockTownController } from '../../TestUtils';
 import { PlayerLocation, TeleportRequest } from '../../types/CoveyTownSocket';
+import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
 import * as PlayerName from './PlayerName';
 import PlayersList from './PlayersList';
-
-const mockToast = jest.fn();
-
-jest.mock('@chakra-ui/react', () => {
-  const ui = jest.requireActual('@chakra-ui/react');
-  return {
-    ...ui,
-    useToast: () => mockToast,
-  };
-});
 
 describe('PlayersInTownList', () => {
   const randomLocation = (): PlayerLocation => ({
@@ -53,12 +43,10 @@ describe('PlayersInTownList', () => {
     TownController,
     [event: TownEventName, listener: TownEvents[TownEventName]]
   >;
-
   let removeListenerSpy: jest.SpyInstance<
     TownController,
     [event: TownEventName, listener: TownEvents[TownEventName]]
   >;
-
   const expectProperlyRenderedPlayersList = async (
     renderData: RenderResult,
     playersToExpect: PlayerController[],
@@ -127,47 +115,57 @@ describe('PlayersInTownList', () => {
       ourPlayer,
     });
     useTownControllerSpy.mockReturnValue(mockedTownController);
-
     addListenerSpy = jest.spyOn(mockedTownController, 'addListener');
     removeListenerSpy = jest.spyOn(mockedTownController, 'removeListener');
-
-    mockToast.mockReset();
   });
 
   /**
+
    * Retrieve the listener passed to "addListener" for a given eventName
+
    * @throws Error if the addListener method was not invoked exactly once for the given eventName
+
    */
+
   function getSingleListenerAdded<Ev extends EventNames<TownEvents>>(
     eventName: Ev,
+
     spy = addListenerSpy,
   ): TownEvents[Ev] {
     const addedListeners = spy.mock.calls.filter(eachCall => eachCall[0] === eventName);
+
     if (addedListeners.length !== 1) {
       throw new Error(
         `Expected to find exactly one addListener call for ${eventName} but found ${addedListeners.length}`,
       );
     }
-    return addedListeners[0][1] as unknown as TownEvents[Ev];
+
+    return (addedListeners[0][1] as unknown) as TownEvents[Ev];
   }
+
   /**
+
    * Retrieve the listener pased to "removeListener" for a given eventName
+
    * @throws Error if the removeListener method was not invoked exactly once for the given eventName
+
    */
+
   function getSingleListenerRemoved<Ev extends EventNames<TownEvents>>(
     eventName: Ev,
   ): TownEvents[Ev] {
     const removedListeners = removeListenerSpy.mock.calls.filter(
       eachCall => eachCall[0] === eventName,
     );
+
     if (removedListeners.length !== 1) {
       throw new Error(
         `Expected to find exactly one removeListeners call for ${eventName} but found ${removedListeners.length}`,
       );
     }
-    return removedListeners[0][1] as unknown as TownEvents[Ev];
-  }
 
+    return (removedListeners[0][1] as unknown) as TownEvents[Ev];
+  }
   describe('Heading', () => {
     it('Displays a heading "Current town: townName', async () => {
       const renderData = renderPlayersList();
@@ -329,19 +327,42 @@ describe('PlayersInTownList', () => {
       expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalledTimes(1);
     });
   });
-  it('emits teleport cancel event when clicked and is cancel button', async () => {
-    mockedTownController.ourPlayer.outgoingTeleport = {
-      fromPlayerId: players[0].id,
-      toPlayerId: players[1].id,
-      time: new Date(),
-    };
+  describe('Teleport request and Teleport cancel button', () => {
+    it('displays a teleport request button next to each player in the town on first load', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
 
-    const renderData = renderPlayersList();
-    await expectProperlyRenderedPlayersList(renderData, players);
+      const listEntries = await renderData.findAllByRole('listitem');
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
 
-    const teleportRequestButtons = await renderData.getAllByTestId('teleportCancelButton');
-    expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+      expect(teleportRequestButtons.length).toEqual(listEntries.length - 1); // subtract 1 for your own player
+    });
+    it('emits teleport request event when clicked', async () => {
+      const renderData = renderPlayersList();
+      await expectProperlyRenderedPlayersList(renderData, players);
 
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportRequestButton');
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
+
+      act(() => {
+        fireEvent.click(teleportRequestButtons[0]);
+      });
+
+      expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
+    });
+    it('emits teleport cancel event when clicked and is cancel button', async () => {
+      mockedTownController.ourPlayer.outgoingTeleport = {
+        fromPlayerId: players[0].id,
+        toPlayerId: players[1].id,
+        time: new Date(),
+      };
+
+      const renderData = renderPlayersList();
+
+      await expectProperlyRenderedPlayersList(renderData, players);
+
+      const teleportRequestButtons = await renderData.getAllByTestId('teleportCancelButton');
+      expect(teleportRequestButtons.length).toBeGreaterThanOrEqual(0);
       expect(mockedTownController.emitTeleportRequest).toHaveBeenCalled();
     });
     it('displays a teleport cancel button and disables other teleport buttons when outgoing teleport is pending', async () => {
@@ -445,95 +466,6 @@ describe('PlayersInTownList', () => {
           expect(teleportRequestButtons[i]).not.toHaveAttribute('disabled');
         }
       }
-    });
-  });
-  describe('Do not disturb button', () => {
-    it('displays one do not disturb switch for our player in the town on first load', async () => {
-      const renderData = renderPlayersList();
-      await expectProperlyRenderedPlayersList(renderData, players);
-      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
-      expect(doNotDisturbButton.length).toEqual(1);
-    });
-    it('emits an event to change do not disturb state when switch is toggled', async () => {
-      const renderData = renderPlayersList();
-      await expectProperlyRenderedPlayersList(renderData, players);
-      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
-      expect(doNotDisturbButton.length).toEqual(1);
-      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
-
-      expect(ourPlayer.doNotDisturb).toEqual(false);
-      act(() => {
-        fireEvent.click(doNotDisturbButtonRole);
-      });
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
-    });
-    it('does not emit any teleport cancel or denied events when do not disturb switch is toggled and there are no incoming/outgoing teleports', async () => {
-      const renderData = renderPlayersList();
-      await expectProperlyRenderedPlayersList(renderData, players);
-      const doNotDisturbButton = await renderData.getAllByTestId('doNotDisturbButton');
-      expect(doNotDisturbButton.length).toEqual(1);
-      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
-
-      expect(ourPlayer.doNotDisturb).toEqual(false);
-      act(() => {
-        fireEvent.click(doNotDisturbButtonRole);
-      });
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
-      expect(mockedTownController.emitTeleportCanceled).not.toHaveBeenCalled();
-      expect(mockedTownController.emitTeleportDenied).not.toHaveBeenCalled();
-    });
-    it('emits an event to deny incoming teleports when do not disturb switch is toggled and there are incoming teleports', async () => {
-      const renderData = renderPlayersList();
-      await expectProperlyRenderedPlayersList(renderData, players);
-      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
-
-      const teleport0: TeleportRequest = {
-        fromPlayerId: players[1].id,
-        toPlayerId: players[0].id,
-        time: new Date(),
-      };
-      const teleport1: TeleportRequest = {
-        fromPlayerId: players[2].id,
-        toPlayerId: players[0].id,
-        time: new Date(),
-      };
-      ourPlayer.addIncomingTeleport(teleport0);
-      ourPlayer.addIncomingTeleport(teleport1);
-
-      expect(ourPlayer.doNotDisturb).toEqual(false);
-      act(() => {
-        fireEvent.click(doNotDisturbButtonRole);
-      });
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
-      expect(mockedTownController.emitTeleportCanceled).not.toHaveBeenCalled();
-      expect(mockedTownController.emitTeleportDenied).toHaveBeenCalled();
-      expect(mockedTownController.emitTeleportDenied).toHaveBeenCalledTimes(2);
-    });
-    it('emits an event to cancel the outgoing teleports when do not disturb switch is toggled', async () => {
-      const renderData = renderPlayersList();
-      await expectProperlyRenderedPlayersList(renderData, players);
-      const doNotDisturbButtonRole = await renderData.getByRole('checkbox');
-
-      const teleport0: TeleportRequest = {
-        fromPlayerId: players[0].id,
-        toPlayerId: players[1].id,
-        time: new Date(),
-      };
-
-      ourPlayer.outgoingTeleport = teleport0;
-
-      act(() => {
-        fireEvent.click(doNotDisturbButtonRole);
-      });
-
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalled();
-      expect(mockedTownController.emitDoNotDisturbChange).toHaveBeenCalledTimes(1);
-      expect(mockedTownController.emitTeleportDenied).not.toHaveBeenCalled();
-      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalled();
-      expect(mockedTownController.emitTeleportCanceled).toHaveBeenCalledTimes(1);
     });
   });
   describe('Timer', () => {
