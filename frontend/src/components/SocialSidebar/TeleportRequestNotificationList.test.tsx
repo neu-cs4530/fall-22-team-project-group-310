@@ -36,6 +36,7 @@ describe('TeleportRequestNotificationsList', () => {
     | [event: keyof PlayerEvents, newLocation: PlayerLocation]
     | [event: keyof PlayerEvents, newRequest: TeleportRequest | PreviousTeleportRequestStatus]
     | [event: keyof PlayerEvents, newIncomingList: TeleportRequest[]]
+    | [event: keyof PlayerEvents, newValue: boolean]
   >;
   let mockedTownController: TownController;
   let players: PlayerController[] = [];
