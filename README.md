@@ -45,3 +45,105 @@ Create a `.env` file in the `frontend` directory, with the line: `REACT_APP_TOWN
 
 In the `frontend` directory, run `npm start` (again, you'll need to run `npm install` the very first time). After several moments (or minutes, depending on the speed of your machine), a browser will open with the frontend running locally.
 The frontend will automatically re-compile and reload in your browser if you change any files in the `frontend/src` directory.
+
+## Team 310 Feature Addition
+
+### Feature Overview
+
+In the original Covey.town users move around solely by directing their character via the arrow keys. As towns scale up and it begins to take longer for a player to make their way to other parts of the map, other methods of locomotion are needed to find other players. To solve this problem, we’ve implemented teleportation capabilities between any two players: regardless of their location.
+
+Users can request to teleport to another player in the app. They can only request one player at a time, but they do have the ability to cancel their request. The buttons to control your requests to other players appears in the Players List.
+
+When someone is requesting to teleport to you, the teleport will appear in the new Incoming Teleport Requests section of the Social Sidebar. Users have the ability to accept or deny incoming teleport requests. If the user does not respond within 30 seconds, the teleport request will time-out.
+
+To keep players informed about their teleport requests, we display pop-up toasts at the bottom of the screen upon changing status of requests involving the current user.
+
+### Events
+
+#### Client to Server Events
+
+- teleportRequest: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer requests to teleport to another player.
+  - Sent to Server to relay to other Clients.
+- teleportCanceled: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer cancels their request to another player.
+  - Sent to Server to relay to other Clients.
+- teleportAccepted: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer accepts the request of another player.
+  - Sent to Server to relay to other Clients.
+- teleportDenied: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer denies the request of another player.
+  - Sent to Server to relay to other Clients.
+- teleportTimeout: (request: TeleportRequest) => void;
+  - Event emitted when the outgoing teleport timer reaches 0. This means that the requested player did not respond in time.
+  - Sent to Server to relay to other Clients.
+- doNotDisturbChange: (state: boolean) => void;
+  - Event emitted when ourPlayer changes their do not disturb state.
+  - Sent to Server to relay to other Clients.
+- outgoingTeleportTimerChange: (state: number | undefined) => void;
+  - Event emitted when ourPlayer's outgoing teleport timer changes.
+  - This event is emitted when the timer is added (when ourPlayer requests to teleport to another player), when the timer is removed (due to the request being cancelled, accepted, or denied), or when the timer is decremented (a second passes since the timer started).
+  - Sent to Server to relay to other Clients.
+- teleportSuccess: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer successfully teleports to another.
+  - Sent to Server to relay to other Clients.
+- teleportFailed: (request: TeleportRequest) => void;
+  - Event emitted when ourPlayer's teleport request or teleport fails at any point during the process.
+  - Sent to Server to relay to other Clients.
+
+#### Server to Client Events
+
+- teleportRequest: (request: TeleportRequest) => void;
+  - Relays the teleport request to other Clients so the requested player's frontend can update appropriately.
+- teleportCanceled: (request: TeleportRequest) => void;
+  - Relays the teleport cancelled event to other Clients so the requested player's frontend can update appropriately.
+- teleportAccepted: (request: TeleportRequest) => void;
+  - Relays the teleport accepted event to other Clients so the requesting player's frontend can update appropriately.
+- teleportDenied: (request: TeleportRequest) => void;
+  - Relays the teleport denied event to other Clients so the requesting player's frontend can update appropriately.
+- teleportTimeout: (request: TeleportRequest) => void;
+  - Relays the teleport timeout event to other Clients so the requested player's frontend can update appropriately.
+- doNotDisturbChange: (playerInfo: DoNotDisturbInfo) => void;
+  - Relays the do not disturb change event to other Clients so all other frontend displays can update appropriately.
+- outgoingTeleportTimerChange: (playerInfo: OutgoingTeleportTimerInfo) => void;
+  - Relays the teleport timer change event to other Clients so the requested player's frontend can update the timer value appropriately.
+- teleportSuccess: (request: TeleportRequest) => void;
+  - Relays the teleport success event to other Clients so the requested or requesting player's frontend can update appropriately.
+- teleportFailed: (request: TeleportRequest) => void;
+  - Relays the teleport failed event to other Clients so the requested or requesting player's frontend can update appropriately.
+
+#### Town Events
+
+- teleportTimeout: (request: TeleportRequest) => void;
+  - An event that indicates that a player's teleport request has timed out.
+  - Emitted 30 seconds after the initial teleport request.
+  - Upon teleportTimeout, the player is notified via a toast that the teleport has timed-out.
+- teleportSuccess: (request: TeleportRequest) => void;
+  - An event that indicates that a player has successfully teleported to another player.
+  - Emitted when ourPlayer successfully teleported to another or another player successfully teleported to ourPlayer.
+  - Upon teleportSuccess, the player is notified via a toast.
+- teleportFailed: (request: TeleportRequest) => void;
+  - An event that indicates that a player has failed to teleport to another player.
+  - Emitted when ourPlayer failed to teleport to another or another player failed to teleport to ourPlayer.
+  - Upon teleportFailed, the player is notified via a toast.
+- incomingTeleportTimerChange: (state: OutgoingTeleportTimerInfo) => void;
+  - An event that indicates that another player's outgoing teleport timer has changed.
+  - Emitted when a timer related to one of ourPlayer's incoming teleports is changed.
+  - Upon incomingTeleportTimerChange, the request notification is re-rendered with the new timer value.
+
+#### Player Events
+
+- outgoingTeleportChange: (newRequest: TeleportRequest | PreviousTeleportRequestStatus) => void;
+  - An event that indicates that this player's outgoing teleport request has changed
+  - Either indicates the PreviousTeleportRequestStatus -- why the previous teleport was removed -- or the current outgoing teleport request.
+  - Upon outgoingTeleportChange, the player's request buttons are updated and a toast providing information about the change is displayed (if the request was accepted, denied, or timed-out).
+- incomingTeleportsChange: (newIncomingList: TeleportRequest[]) => void;
+  - An event that indicates that this player's incoming teleport requests have changed.
+  - Emitted when an incoming teleport is added or removed.
+  - Upon incomingTeleportsChange, the request notification list is re-rendered with the updated request information.
+- doNotDisturbChange: (newValue: boolean) => void;
+  - An event that indicates that this player's do not disturb status has changed.
+  - Upon doNotDisturbChange, the players' teleport request options are updated appropriately.
+- outgoingTeleportTimerChange: (newValue: number | undefined) => void;
+  - An event that indicates that this player's outgoing teleport request timer has changed.
+  - Upon outgoingTeleportTimerChange, the page is re-rendered with the updated timer value.
