@@ -28,7 +28,7 @@ import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
 
 const CALCULATE_NEARBY_PLAYERS_DELAY = 300;
-export const TELEPORT_TIMEOUT_SECONDS = 10;
+export const TELEPORT_TIMEOUT_SECONDS = 30;
 
 export type ConnectionProperties = {
   userName: string;
