@@ -576,7 +576,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('teleportSuccess', request => {
       if (request.fromPlayerId === this.ourPlayer.id || request.toPlayerId === this.ourPlayer.id) {
-        this.emit('teleportFailed', request);
+        this.emit('teleportSuccess', request);
       }
     });
     /**
