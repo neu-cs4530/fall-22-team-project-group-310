@@ -344,11 +344,12 @@ describe('TownController', () => {
         });
       });
       describe('emitOutgoingTeleportTimerChange', () => {
+        let request: TeleportRequest;
         beforeEach(() => {
           expect(testController.ourPlayer.outgoingTeleport).toBe(
             PreviousTeleportRequestStatus.Default,
           );
-          const request: TeleportRequest = {
+          request = {
             fromPlayerId: testController.ourPlayer.id,
             toPlayerId: testController.players[1].id,
             time: new Date(),
@@ -366,7 +367,6 @@ describe('TownController', () => {
         });
         it('emits an outgoingTeleportTimerChange if the newValue is undefined', () => {
           testController.emitOutgoingTeleportTimerChange(undefined);
-          expect(mockSocket.emit).toHaveBeenCalledWith('outgoingTeleportTimerChange', undefined);
           expect(testController.ourPlayer.outgoingTeleportTimer).toBeUndefined();
           // We cannot test to check that the NodeJS.Timer gets cleared as we have no way of directly
           // accessing the timer variable to see if it has been cleared. We do confirm this functionality
@@ -374,8 +374,7 @@ describe('TownController', () => {
         });
         it('emits an outgoingTeleportTimerChange if the newValue is zero and times our our outgoing request', () => {
           testController.emitOutgoingTeleportTimerChange(0);
-          expect(mockSocket.emit).toHaveBeenCalledWith('outgoingTeleportTimerChange', undefined);
-          expect(testController.ourPlayer.outgoingTeleportTimer).toBeUndefined();
+          expect(mockSocket.emit).toHaveBeenCalledWith('teleportTimeout', request);
           expect(testController.ourPlayer.outgoingTeleport).toBe(
             PreviousTeleportRequestStatus.Timeout,
           );
