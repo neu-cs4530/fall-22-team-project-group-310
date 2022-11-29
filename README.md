@@ -54,7 +54,9 @@ In the original Covey.town users move around solely by directing their character
 
 Users can request to teleport to another player in the app. They can only request one player at a time, but they do have the ability to cancel their request. The buttons to control your requests to other players appears in the Players List.
 
-When someone is requesting to teleport to you, the teleport will appear in the new Incoming Teleport Requests section of the Social Sidebar. Users have the ability to accept or deny incoming teleport requests. If the user does not respond within 30 seconds, the teleport request will time-out.
+When someone is requesting to teleport to you, the request will appear in the new Incoming Teleport Requests section of the Social Sidebar. Users have the ability to accept or deny incoming teleport requests. If the user does not respond within 30 seconds, the teleport request will time-out.
+
+Players can also put themselves in a do not disturb mode that prevents other players from requesting to teleport to them. When in do not disturb mode, the player also cannot teleport to others.
 
 To keep players informed about their teleport requests, we display pop-up toasts at the bottom of the screen upon changing status of requests involving the current user.
 
