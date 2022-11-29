@@ -50,7 +50,13 @@ The frontend will automatically re-compile and reload in your browser if you cha
 
 ### Feature Overview
 
-** insert information about our feature **
+In the original Covey.town users move around solely by directing their character via the arrow keys. As towns scale up and it begins to take longer for a player to make their way to other parts of the map, other methods of locomotion are needed to find other players. To solve this problem, we’ve implemented teleportation capabilities between any two players: regardless of their location.
+
+Users can request to teleport to another player in the app. They can only request one player at a time, but they do have the ability to cancel their request. The buttons to control your requests to other players appears in the Players List.
+
+When someone is requesting to teleport to you, the teleport will appear in the new Incoming Teleport Requests section of the Social Sidebar. Users have the ability to accept or deny incoming teleport requests. If the user does not respond within 30 seconds, the teleport request will time-out.
+
+To keep players informed about their teleport requests, we display pop-up toasts at the bottom of the screen upon changing status of requests involving the current user.
 
 ### Events
 
