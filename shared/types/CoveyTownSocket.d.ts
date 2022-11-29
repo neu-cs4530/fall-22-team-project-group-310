@@ -85,7 +85,7 @@ export interface ServerToClientEvents {
   teleportDenied: (request: TeleportRequest) => void;
   teleportTimeout: (request: TeleportRequest) => void;
   doNotDisturbChange: (playerInfo: DoNotDisturbInfo) => void;
-  outgoingTeleportTimerChange: (playerInfo: OutgoingTeleportTimerInfo) => void;
+  outgoingTeleportTimerChange: (timerInfo: OutgoingTeleportTimerInfo) => void;
   teleportSuccess: (request: TeleportRequest) => void;
   teleportFailed: (request: TeleportRequest) => void;
 }

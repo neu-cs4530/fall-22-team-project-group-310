@@ -26,9 +26,6 @@ export default class Player {
   /** The player's do not disturb state used for recieving teleport requests */
   public doNotDisturbState: boolean;
 
-  /** The player's do not disturb state used for recieving teleport requests */
-  public outgoingTeleportTimerState: number | undefined;
-
   constructor(userName: string, townEmitter: TownEmitter) {
     this.location = {
       x: 0,

@@ -28,6 +28,7 @@ import PlayerController from './PlayerController';
 import ViewingAreaController from './ViewingAreaController';
 
 const CALCULATE_NEARBY_PLAYERS_DELAY = 300;
+export const TELEPORT_TIMEOUT_SECONDS = 30;
 
 export type ConnectionProperties = {
   userName: string;
@@ -604,13 +605,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     /**
      * When outgoing teleport timer changes, update our player's timer status
      */
-    this._socket.on('outgoingTeleportTimerChange', playerInfo => {
+    this._socket.on('outgoingTeleportTimerChange', timerInfo => {
       if (
         this.ourPlayer.incomingTeleports.find(
-          (request: TeleportRequest) => playerInfo.playerId === request.fromPlayerId,
+          (request: TeleportRequest) => timerInfo.playerId === request.fromPlayerId,
         )
       ) {
-        this.emit('incomingTeleportTimerChange', playerInfo);
+        this.emit('incomingTeleportTimerChange', timerInfo);
       }
     });
   }
@@ -723,13 +724,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   public emitOutgoingTeleportTimerChange(newValue: number | undefined) {
     if (newValue === 0) {
       this.emitTeleportTimeout();
-      this._socket.emit('outgoingTeleportTimerChange', undefined);
-      this.ourPlayer.outgoingTeleportTimer = undefined;
-      if (this._ourPlayerOutgoingTeleportTimerInterval) {
-        clearInterval(this._ourPlayerOutgoingTeleportTimerInterval);
-      }
-    } else if (!newValue) {
-      this._socket.emit('outgoingTeleportTimerChange', undefined);
+    }
+
+    if (!newValue) {
       this.ourPlayer.outgoingTeleportTimer = undefined;
       if (this._ourPlayerOutgoingTeleportTimerInterval) {
         clearInterval(this._ourPlayerOutgoingTeleportTimerInterval);
