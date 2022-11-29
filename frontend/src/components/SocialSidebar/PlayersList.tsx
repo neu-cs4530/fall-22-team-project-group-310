@@ -15,7 +15,7 @@ import Cancel from '@material-ui/icons/Cancel';
 import MyLocation from '@material-ui/icons/MyLocation';
 import React, { useEffect, useState } from 'react';
 import PlayerController from '../../classes/PlayerController';
-import { usePlayers } from '../../classes/TownController';
+import { TELEPORT_TIMEOUT_SECONDS, usePlayers } from '../../classes/TownController';
 import useTownController from '../../hooks/useTownController';
 import { TeleportRequest } from '../../types/CoveyTownSocket';
 import { PreviousTeleportRequestStatus } from '../../types/TypeUtils';
@@ -180,7 +180,7 @@ export default function PlayersInTownList(): JSX.Element {
           <Button
             onClick={() => {
               townController.emitTeleportRequest(player.id);
-              townController.startOutgoingTeleportTimer(30);
+              townController.startOutgoingTeleportTimer(TELEPORT_TIMEOUT_SECONDS);
             }}
             leftIcon={
               player.doNotDisturb ? <Block fontSize='small' /> : <MyLocation fontSize='small' />

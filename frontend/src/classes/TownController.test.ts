@@ -683,7 +683,7 @@ describe('TownController', () => {
         });
       });
       describe('teleportTimerChange events', () => {
-        let outgoingTeleportTimerChangeListener: (playerInfo: OutgoingTeleportTimerInfo) => void;
+        let outgoingTeleportTimerChangeListener: (timerInfo: OutgoingTeleportTimerInfo) => void;
         beforeEach(() => {
           // Create the listeners and emiters
           outgoingTeleportTimerChangeListener = getEventListener(
@@ -713,20 +713,20 @@ describe('TownController', () => {
         });
         it('emits an incomingTeleportTimerChange if the player in the outgoingTeleportTimerChange event is in our incoming teleports list', () => {
           expect(mockListeners.incomingTeleportTimerChange).not.toHaveBeenCalled();
-          const playerInfo: OutgoingTeleportTimerInfo = {
+          const timerInfo: OutgoingTeleportTimerInfo = {
             playerId: testController.players[2].id,
             state: 27,
           };
-          outgoingTeleportTimerChangeListener(playerInfo);
-          expect(mockListeners.incomingTeleportTimerChange).toHaveBeenCalledWith(playerInfo);
+          outgoingTeleportTimerChangeListener(timerInfo);
+          expect(mockListeners.incomingTeleportTimerChange).toHaveBeenCalledWith(timerInfo);
         });
         it('does not emit an incomingTeleportTimerChange if the player is not in our incoming from list', () => {
           expect(mockListeners.incomingTeleportTimerChange).not.toHaveBeenCalled();
-          const playerInfo: OutgoingTeleportTimerInfo = {
+          const timerInfo: OutgoingTeleportTimerInfo = {
             playerId: testController.ourPlayer.id,
             state: 12,
           };
-          outgoingTeleportTimerChangeListener(playerInfo);
+          outgoingTeleportTimerChangeListener(timerInfo);
           expect(mockListeners.incomingTeleportTimerChange).not.toHaveBeenCalled();
         });
       });

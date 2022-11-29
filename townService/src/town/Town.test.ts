@@ -663,7 +663,7 @@ describe('Town', () => {
       expect(() => getLastEmittedEvent(townEmitter, 'doNotDisturbChange', 1)).toThrowError();
       expect(player.doNotDisturbState).toBe(true);
     });
-    it('Forwards doNotDisturbChange to all players in the same town and updates the players state', async () => {
+    it('Forwards outgoingTeleportTimerChange to all players in the same town', async () => {
       const outgoingTeleportTimerHandler = getEventListener(
         playerTestData.socket,
         'outgoingTeleportTimerChange',
@@ -678,7 +678,6 @@ describe('Town', () => {
       expect(() =>
         getLastEmittedEvent(townEmitter, 'outgoingTeleportTimerChange', 1),
       ).toThrowError();
-      expect(player.outgoingTeleportTimerState).toBe(21);
     });
   });
   describe('addConversationArea', () => {
