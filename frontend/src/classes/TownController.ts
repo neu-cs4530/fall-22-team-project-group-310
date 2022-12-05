@@ -462,7 +462,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         }
         this.emit('playerMoved', playerToUpdate);
       } else {
-        //TODO: It should not be possible to receive a playerMoved event for a player that is not already in the players array, right?
         const newPlayer = PlayerController.fromPlayerModel(movedPlayer);
         this._players = this.players.concat(newPlayer);
         this.emit('playerMoved', newPlayer);
